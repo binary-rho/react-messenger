@@ -113,19 +113,6 @@ const ChatProfileImg = styled.img`
   border-radius: 50%;
   object-fit: cover;
 `
-const ChatProfileAlarm = styled.div`
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 0.8125rem;
-  height: 0.8125rem;
-  background-color: ${colors.green};
-  border-width: 0.15rem;
-  border-style: solid;
-  border-color: ${colors.grey_50};
-  border-radius: 999px;
-  box-sizing: content-box;
-`
 
 const ChatTextBox = styled.div`
   width: 100%;

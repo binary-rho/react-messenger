@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { colors } from '../style/colors'
 import { imgPath } from '../style/imgPath'

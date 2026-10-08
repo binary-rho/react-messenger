@@ -1,5 +1,5 @@
 import styled from 'styled-components'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { colors } from '../style/colors'
 import { ReactComponent as WriteIcon } from '../assets/svgs/write.svg'
 import { ReactComponent as EditIcon } from '../assets/svgs/edit.svg'

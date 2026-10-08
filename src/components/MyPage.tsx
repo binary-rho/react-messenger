@@ -183,13 +183,6 @@ const TextBox = styled.div`
   height: 3.125rem;
   margin: 3.19rem 0rem 0rem 1rem;
 `
-const ProfileEmail = styled.span`
-  color: ${colors.grey_700};
-  font-family: 'Pretendard-Regular';
-  font-size: 1rem;
-  line-height: 140%; /* 1.4rem */
-  margin-top: 0.25rem;
-`
 const SNSBox = styled.div`
   display: flex;
   flex-direction: column;
