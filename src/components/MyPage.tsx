@@ -126,7 +126,7 @@ const LogoutButton = styled.button`
   height: 2.75rem;
   border: none;
   border-radius: 0.375rem;
-  background-color: ${colors.white};
+  background-color: ${colors.surface};
   color: ${colors.grey_700};
   font-family: 'Pretendard-Medium';
   font-size: 1rem;
@@ -200,7 +200,7 @@ const SNSLine = styled.div`
   width: 100%;
   justify-content: space-between;
   align-items: center;
-  background-color: ${colors.white};
+  background-color: ${colors.surface};
   border-radius: 0.375rem;
   padding: 0.6875rem 0.5625rem 0.6875rem 1.125rem;
   margin-bottom: 0.5rem;
@@ -233,7 +233,7 @@ const InputBox = styled.input`
   outline: none;
   border: none;
   border-radius: 0.375rem;
-  background: ${colors.white};
+  background: ${colors.surface};
   font-size: 1rem;
   font-family: 'Pretendard-Regular';
   padding: 0.6rem 0.2rem 0.6rem 0.5rem;

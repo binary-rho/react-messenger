@@ -1,6 +1,7 @@
 import { createGlobalStyle } from 'styled-components'
 import reset from 'styled-reset'
-import { colors } from './style/colors'
+import { colors, themeCssVariables } from './style/colors'
+import { ThemeToggleButton } from './components/ThemeToggleButton'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { Chatting } from './pages/Chatting'
 import { GroupChatting } from './pages/GroupChatting'
@@ -13,6 +14,7 @@ function App() {
   return (
     <RecoilRoot>
       <GlobalStyle />
+      <ThemeToggleButton />
       <BrowserRouter>
         <ProfileGate>
           <Routes>
@@ -32,6 +34,20 @@ export default App
 const GlobalStyle = createGlobalStyle`
   
   ${reset}
+  :root {
+    ${themeCssVariables.light}
+    color-scheme: light;
+  }
+  :root[data-theme='dark'] {
+    ${themeCssVariables.dark}
+    color-scheme: dark;
+  }
+  input, textarea {
+    color: ${colors.grey_900};
+  }
+  :root[data-theme='dark'] img[src*='_Status_bar.'] {
+    filter: invert(1);
+  }
   *, *::before, *::after{
         box-sizing: border-box;
     }
@@ -41,6 +57,6 @@ const GlobalStyle = createGlobalStyle`
         margin: 0;
         justify-content: center;
         font-family: "Pretendard-Regular";
-        background-color: ${colors.grey_900};
+        background-color: ${colors.outside};
     };
 `

@@ -121,7 +121,7 @@ const NameInput = styled.input`
   border: 1px solid ${colors.grey_100};
   outline: none;
   border-radius: 0.5rem;
-  background: ${colors.white};
+  background: ${colors.surface};
   font-size: 1rem;
   font-family: 'Pretendard-Regular';
   padding: 0 1rem;

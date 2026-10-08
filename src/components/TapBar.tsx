@@ -155,7 +155,7 @@ const InputLine = styled.div`
   display: flex;
   flex-direction: row;
   border-radius: 0.375rem;
-  background: ${colors.white};
+  background: ${colors.surface};
   padding: 0.5rem 0.87rem 0.5rem 0.87rem;
 `
 
@@ -164,7 +164,7 @@ const InputBox = styled.input`
   outline: none;
   border: none;
   border-radius: 0.375rem;
-  background: ${colors.white};
+  background: ${colors.surface};
   font-size: 1.125rem;
   font-family: 'Pretendard-Regular';
   padding: 0rem 0.2rem 0rem 0.2rem;
@@ -178,7 +178,7 @@ const InputBox = styled.input`
     /* Internet Explorer */
     color: ${colors.grey_400};
   }
-  background-color: ${colors.white};
+  background-color: ${colors.surface};
 `
 
 const TapContainer = styled.div`
@@ -188,7 +188,7 @@ const TapContainer = styled.div`
   justify-content: space-between;
   height: 4rem;
   width: 100%;
-  background-color: ${colors.white};
+  background-color: ${colors.surface};
 `
 
 const IconBox = styled.div`

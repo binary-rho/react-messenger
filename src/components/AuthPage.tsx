@@ -134,7 +134,7 @@ const ModeTab = styled.button<{ $active: boolean }>`
   height: 2.25rem;
   border: none;
   border-radius: 0.375rem;
-  background-color: ${({ $active }) => ($active ? colors.white : 'transparent')};
+  background-color: ${({ $active }) => ($active ? colors.surface : 'transparent')};
   color: ${({ $active }) => ($active ? colors.purple : colors.grey_700)};
   font-family: 'Pretendard-Medium';
   font-size: 1rem;
@@ -146,7 +146,7 @@ const Input = styled.input`
   border: 1px solid ${colors.grey_100};
   outline: none;
   border-radius: 0.5rem;
-  background: ${colors.white};
+  background: ${colors.surface};
   font-size: 1rem;
   font-family: 'Pretendard-Regular';
   padding: 0 1rem;

@@ -195,7 +195,7 @@ const SafeAreaImg = styled.img`
 `
 const SafeAreaImg2 = styled.img`
   width: 100%;
-  background-color: ${colors.white};
+  background-color: ${colors.surface};
 `
 
 const TopHeading = styled.div`
@@ -256,7 +256,7 @@ const BottomBox = styled.div`
   height: 60px;
   justify-content: center;
   align-items: center;
-  background-color: ${colors.white};
+  background-color: ${colors.surface};
 `
 const ChattingList = styled.div`
   display: flex;
@@ -318,7 +318,7 @@ const ChattingBox1 = styled.span`
 `
 
 const ChattingBox2 = styled.span`
-  background-color: ${colors.white};
+  background-color: ${colors.surface};
   border-radius: 0.6rem;
   padding: 0.63rem 0.75rem 0.63rem 0.75rem;
   color: ${colors.grey_900};
@@ -382,7 +382,7 @@ const ChatArea = styled.div`
   width: 100%;
   height: 60px;
   padding: 14px 16px 0px 16px;
-  background-color: ${colors.white};
+  background-color: ${colors.surface};
   box-sizing: border-box;
 `
 

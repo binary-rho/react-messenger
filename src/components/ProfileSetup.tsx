@@ -132,7 +132,7 @@ const NameInput = styled.input`
   border: none;
   outline: none;
   border-radius: 0.375rem;
-  background: ${colors.white};
+  background: ${colors.surface};
   font-size: 1.125rem;
   font-family: 'Pretendard-Regular';
   padding: 0 0.9rem;

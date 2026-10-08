@@ -38,5 +38,5 @@ const SafeAreaImg = styled.img<SafeAreaImgProps>`
 `
 const SafeAreaImg2 = styled.img<SafeAreaImgProps>`
   width: 100%;
-  background-color: ${colors.white};
+  background-color: ${colors.surface};
 `

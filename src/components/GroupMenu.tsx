@@ -119,7 +119,7 @@ const Sheet = styled.div`
   max-height: 70%;
   padding: 1.25rem;
   border-radius: 1rem 1rem 0 0;
-  background-color: ${colors.white};
+  background-color: ${colors.surface};
 `
 const SheetTitle = styled.h2`
   margin-bottom: 0.75rem;
