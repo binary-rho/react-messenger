@@ -23,12 +23,16 @@ export const ChatRoomView = ({
   senders,
   myId,
   onSend,
+  onMenuClick,
+  overlay,
 }: {
   title: string
   messages: ChatRoomMessage[]
   senders: Map<string, Profile>
   myId: string
   onSend: (content: string) => Promise<void>
+  onMenuClick?: () => void
+  overlay?: React.ReactNode
 }) => {
   const [inputValue, setInputValue] = useState<string>('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -84,7 +88,7 @@ export const ChatRoomView = ({
             <UserName>{title}</UserName>
             {isChatOn && <GreenCircle />}
           </UserNameBox>
-          <DotsIcon src={imgPath.path[6]} />
+          <DotsIcon src={imgPath.path[6]} onClick={onMenuClick} style={{ cursor: onMenuClick ? 'pointer' : 'default' }} />
         </UserContainer>
       </TopHeading>
       {isChatOn ? (
@@ -171,11 +175,13 @@ export const ChatRoomView = ({
         </ChatArea>
       </BottomBox>
       <SafeAreaImg2 src={imgPath.path[2]} />
+      {overlay}
     </ChattingContainer>
   )
 }
 
 const ChattingContainer = styled.div`
+  position: relative;
   display: flex;
   flex-direction: column;
   background-color: ${colors.grey_50};

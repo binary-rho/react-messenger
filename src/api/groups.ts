@@ -33,6 +33,17 @@ export const createGroup = async (name: string, memberIds: string[]): Promise<st
   return data as string
 }
 
+export const addGroupMembers = async (groupId: string, memberIds: string[]): Promise<void> => {
+  const { error } = await supabase.rpc('add_group_members', { gid: groupId, member_ids: memberIds })
+  if (error) throw error
+}
+
+//마지막 멤버가 나가면 서버에서 그룹도 삭제됨
+export const leaveGroup = async (groupId: string): Promise<void> => {
+  const { error } = await supabase.rpc('leave_group', { gid: groupId })
+  if (error) throw error
+}
+
 //RLS로 내가 속한 그룹만 조회됨
 export const fetchMyGroups = async (): Promise<Group[]> => {
   const { data, error } = await supabase.from('groups').select('*')

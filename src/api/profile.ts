@@ -33,6 +33,13 @@ export const fetchProfileById = async (id: string): Promise<Profile | null> => {
   return data
 }
 
+export const fetchProfilesByIds = async (ids: string[]): Promise<Profile[]> => {
+  if (ids.length === 0) return []
+  const { data, error } = await supabase.from('profiles').select('*').in('id', ids)
+  if (error) throw error
+  return data ?? []
+}
+
 export const fetchOtherProfiles = async (myId: string): Promise<Profile[]> => {
   const { data, error } = await supabase
     .from('profiles')
