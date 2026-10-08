@@ -3,6 +3,8 @@ import reset from 'styled-reset'
 import { colors } from './style/colors'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { Chatting } from './pages/Chatting'
+import { GroupChatting } from './pages/GroupChatting'
+import { GroupCreate } from './pages/GroupCreate'
 import Messenger from './pages/Messenger'
 import { ProfileGate } from './components/ProfileGate'
 import { RecoilRoot } from 'recoil'
@@ -16,6 +18,8 @@ function App() {
           <Routes>
             <Route path="/" element={<Messenger />}></Route>
             <Route path="/chatting/:id" element={<Chatting />}></Route>
+            <Route path="/group/:id" element={<GroupChatting />}></Route>
+            <Route path="/groups/new" element={<GroupCreate />}></Route>
           </Routes>
         </ProfileGate>
       </BrowserRouter>

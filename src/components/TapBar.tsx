@@ -7,11 +7,13 @@ import { ReactComponent as FriendsIcon } from '../assets/svgs/friends.svg'
 import { ReactComponent as ChattingIcon } from '../assets/svgs/chatting.svg'
 import { ReactComponent as SettingIcon } from '../assets/svgs/setting.svg'
 import { ReactComponent as SearchIcon } from '../assets/svgs/search.svg'
+import { useNavigate } from 'react-router-dom'
 import { FriendList } from './FriendList'
 import { ChatList } from './ChatList'
 import { MyPage } from './MyPage'
 
 export const TapBar = () => {
+  const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement>(null)
   //탭바 상태 localStorage에 저장
   const [isFriend, setIsFriend] = useState<boolean>(
@@ -50,7 +52,10 @@ export const TapBar = () => {
           <TitleText style={{ color: isSetting ? colors.white : colors.grey_900 }}>
             {isFriend ? '친구들' : isSetting ? '내 설정' : '채팅'}
           </TitleText>
-          <WriteIcon style={{ color: isSetting ? 'transparent' : colors.grey_900, width: '1.5rem' }} />
+          <WriteIcon
+            onClick={() => !isSetting && navigate('/groups/new')}
+            style={{ color: isSetting ? 'transparent' : colors.grey_900, width: '1.5rem', cursor: 'pointer' }}
+          />
         </UserContainer>
       </TopHeading>
       {!isSetting ? (
