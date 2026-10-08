@@ -1,43 +1,67 @@
 import styled from 'styled-components'
 import { colors } from '../style/colors'
-import { useCallback, useState } from 'react'
+import { useRef, useState } from 'react'
+import { useSetRecoilState } from 'recoil'
 import { imgPath } from '../style/imgPath'
 import { ReactComponent as PencilIcon } from '../assets/svgs/pencil.svg'
 import { ReactComponent as LinkIcon } from '../assets/svgs/link.svg'
-import userData from '../assets/data/userData.json'
+import { signOut } from '../api/auth'
+import { resolveAvatarSrc, updateProfile, validateAvatarFile, validateName } from '../api/profile'
+import { myProfileState, useMyProfile } from '../states/profileAtom'
 
 export const MyPage = () => {
+  const me = useMyProfile()
+  const setMyProfile = useSetRecoilState(myProfileState)
   const [editName, setEditName] = useState<boolean>(false)
-  const [userName, setUserName] = useState<String>(userData[0].userName)
   const [inputValue, setInputValue] = useState<string>('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value)
   }
-  const onSubmit = useCallback(
-    (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault()
-      //json파일을 localStorage에 저장하기 조금 불편해서...
-      //이 부분은 유지안됨
-      setUserName(inputValue)
-      userData[0].userName = inputValue
-      setEditName(false)
 
-      //입력한 값이 없을 때 alert 추가
-      if (inputValue.trim() == '') {
-        alert('이름을 입력해주세요.')
-      } else {
-        setInputValue('')
-      }
-    },
-    [inputValue],
-  )
+  const saveProfile = async (changes: { name?: string; avatarFile?: File }) => {
+    try {
+      setMyProfile(await updateProfile(me.id, changes))
+    } catch (error) {
+      console.error(error)
+      alert('프로필을 저장하지 못했어요. 다시 시도해주세요.')
+    }
+  }
+
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    //입력한 값이 없을 때 alert 추가
+    const invalidReason = validateName(inputValue)
+    if (invalidReason) {
+      alert(invalidReason)
+      return
+    }
+    await saveProfile({ name: inputValue })
+    setInputValue('')
+    setEditName(false)
+  }
+
+  const onSelectAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    const invalidReason = validateAvatarFile(file)
+    if (invalidReason) {
+      alert(invalidReason)
+      return
+    }
+    await saveProfile({ avatarFile: file })
+  }
+
   return (
     <>
       <StatusBar src={imgPath.path[1]} />
       <BackgroundImg src={imgPath.path[8]} />
       <MyPageContainer>
         <ProfileBox>
-          <ProfileImg src={imgPath.profile[0]} />
+          <ProfileImg src={resolveAvatarSrc(me.avatar_url)} onClick={() => fileInputRef.current?.click()} />
+          <input ref={fileInputRef} type="file" accept="image/*" onChange={onSelectAvatar} style={{ display: 'none' }} />
           <TextBox>
             <NameBox>
               {editName ? (
@@ -46,11 +70,16 @@ export const MyPage = () => {
                 </InputContainer>
               ) : (
                 <>
-                  <ProfileName>{userName}</ProfileName> <PencilIcon onClick={() => setEditName(true)} />
+                  <ProfileName>{me.name}</ProfileName>{' '}
+                  <PencilIcon
+                    onClick={() => {
+                      setInputValue(me.name)
+                      setEditName(true)
+                    }}
+                  />
                 </>
               )}
             </NameBox>
-            <ProfileEmail>tbdpapdl@gmail.com</ProfileEmail>
           </TextBox>
         </ProfileBox>
         <SNSBox>
@@ -84,11 +113,25 @@ export const MyPage = () => {
             </a>
           </SNSLine>
         </SNSBox>
+        <LogoutButton type="button" onClick={() => signOut().catch(console.error)}>
+          로그아웃
+        </LogoutButton>
       </MyPageContainer>
     </>
   )
 }
 
+const LogoutButton = styled.button`
+  margin: 1.5rem 1.25rem 0 1.25rem;
+  height: 2.75rem;
+  border: none;
+  border-radius: 0.375rem;
+  background-color: ${colors.white};
+  color: ${colors.grey_700};
+  font-family: 'Pretendard-Medium';
+  font-size: 1rem;
+  cursor: pointer;
+`
 const MyPageContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -119,6 +162,8 @@ const ProfileImg = styled.img`
   width: 6.25rem;
   height: 6.25rem;
   border-radius: 6.25rem;
+  object-fit: cover;
+  cursor: pointer;
   margin-left: 1.25rem;
 `
 const NameBox = styled.div`

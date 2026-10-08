@@ -1,52 +1,43 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { Fragment, useState, useEffect, useRef } from 'react'
 import styled from 'styled-components'
 import { colors } from '../style/colors'
 import { imgPath } from '../style/imgPath'
-import { chatDataState } from '../states/chatAtom'
-import { useRecoilState, useRecoilValue } from 'recoil'
 import { Link, useParams } from 'react-router-dom'
-import { format, getHours } from 'date-fns'
-import userData from '../assets/data/userData.json'
+import { format } from 'date-fns'
+import { fetchProfileById, Profile, resolveAvatarSrc } from '../api/profile'
+import { fetchConversation, isMessageOfConversation, Message, sendMessage, subscribeToMyMessages } from '../api/messages'
+import { useMyProfile } from '../states/profileAtom'
+
+const TIME_FORMAT = 'hh:mma'
 
 export const Chatting = () => {
   const { id } = useParams()
-  const opposite = userData[Number(id)]
-  const me = userData[0]
-
-  const [isChatOn, setIsChatOn] = useState<boolean>(false)
-  const [nowChatting, setNowChatting] = useState<string>(opposite.userName)
-  const [user, setUser] = useState<string>(me.userName)
+  const me = useMyProfile()
+  const [opposite, setOpposite] = useState<Profile | null>(null)
+  const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState<string>('')
   const inputRef = useRef<HTMLInputElement>(null)
   const chatListRef = useRef<HTMLDivElement>(null)
-  const [chatData, setChatData] = useRecoilState(chatDataState)
 
-  //local storage용
+  //id 중복 없이 메시지 추가 (직접 보낸 메시지가 realtime으로도 들어오기 때문)
+  const appendMessage = (message: Message) =>
+    setMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]))
+
   useEffect(() => {
-    //local storage load
-    const Chattings = localStorage.getItem('chatData')
-    if (Chattings && JSON.parse(Chattings)[Number(id)]) {
-      setChatData(JSON.parse(Chattings))
-      setIsChatOn(true)
-      //처음에 가장 아래 스크롤에서 시작
-      setTimeout(() => {
-        const element = chatListRef.current
-        if (element) element.scrollTop = element.scrollHeight
-      }, 0)
-    } else setIsChatOn(false)
-    //chatData가 비었을 땐 메세지 없음 화면이 나오도록
-  }, [])
+    if (!id) return
+    fetchProfileById(id).then(setOpposite).catch(console.error)
+    fetchConversation(me.id, id).then(setMessages).catch(console.error)
+    return subscribeToMyMessages(me.id, (message) => {
+      if (isMessageOfConversation(message, me.id, id)) appendMessage(message)
+    })
+  }, [id, me.id])
 
-  //input이 submit되면 스크롤이 내려감, localStorage에 저장
+  //새 메시지가 오면 가장 아래로 스크롤
   useEffect(() => {
     const element = chatListRef.current
-    if (element) {
-      element.scrollTop = element.scrollHeight
-    }
-  }, [chatData])
+    if (element) element.scrollTop = element.scrollHeight
+  }, [messages])
 
-  //input 함수
-  //onChange
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value)
   }
@@ -58,64 +49,27 @@ export const Chatting = () => {
     inputRef.current?.focus()
   }
 
-  //onSubmit
-  const onSubmit = useCallback(
-    (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault()
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!opposite) return
 
-      //입력한 값이 없을 때 alert 추가
-      if (inputValue.trim() == '') {
-        alert('메시지를 입력해주세요.')
-      } else {
-        createChatting(inputValue)
-        setInputValue('')
-        console.log(chatData)
-      }
-    },
-    [inputValue],
-  )
-
-  const createChatting = (inputValue: string): void => {
-    setChatData((prevChats) => {
-      const newChat = {
-        //상대 채팅데이터의 마지막 c_id에서 +1
-        c_id: prevChats[opposite.uid]?.chat.length
-          ? prevChats[opposite.uid].chat[prevChats[opposite.uid].chat.length - 1].c_id + 1
-          : 0,
-        to: opposite.userName,
-        from: user,
-        content: inputValue,
-        time: new Date().toISOString(),
-      }
-
-      const newChatData = {
-        //각 사용자의 uid값을 id에 넣어서 각각의 data 배열 생성
-        id: opposite.uid,
-        chat: prevChats[opposite.uid] ? [...prevChats[opposite.uid].chat, newChat] : [newChat],
-      }
-
-      const updatedChats = {
-        ...prevChats,
-        [opposite.uid]: newChatData,
-      }
-
-      localStorage.setItem('chatData', JSON.stringify(updatedChats))
-      setIsChatOn(updatedChats[opposite.uid].chat.length > 0)
-
-      return updatedChats
-    }) //채팅리스트에 Input 추가
-  }
-
-  //간단하게 user 변경
-  const changeUser = (): void => {
-    if (user === me.userName) {
-      setUser(opposite.userName)
-      setNowChatting(me.userName)
-    } else {
-      setUser(me.userName)
-      setNowChatting(opposite.userName)
+    //입력한 값이 없을 때 alert 추가
+    if (inputValue.trim() === '') {
+      alert('메시지를 입력해주세요.')
+      return
+    }
+    const content = inputValue
+    setInputValue('')
+    try {
+      appendMessage(await sendMessage(me.id, opposite.id, content))
+    } catch (error) {
+      console.error(error)
+      setInputValue(content)
+      alert('메시지를 보내지 못했어요. 다시 시도해주세요.')
     }
   }
+
+  const isChatOn = messages.length > 0
 
   return (
     <ChattingContainer>
@@ -126,62 +80,57 @@ export const Chatting = () => {
             <BackIcon src={imgPath.path[3]} />
           </Link>
           <UserNameBox>
-            <UserName>{nowChatting}</UserName>
+            <UserName>{opposite?.name}</UserName>
             {isChatOn && <GreenCircle />}
           </UserNameBox>
-          <DotsIcon src={imgPath.path[6]} onClick={changeUser} />
+          <DotsIcon src={imgPath.path[6]} />
         </UserContainer>
       </TopHeading>
       {isChatOn ? (
         <ChattingList ref={chatListRef}>
-          {/* <NextDay>{getHours(new Date()) === 0 && format(new Date(), 'yyyy-MM-dd')}</NextDay> */}
-          {chatData[opposite.uid]?.chat.map((chat, index, arr) => {
+          {messages.map((chat, index, arr) => {
+            const chatTime = format(new Date(chat.created_at), 'hh:mm')
+            const prev = arr[index - 1]
+            const next = arr[index + 1]
             //만약 그 전 채팅시간과 같다면 그 전 채팅시간이 사라지고 마지막 채팅에만
             const showTime: boolean =
-              index === arr.length - 1 ||
-              format(new Date(chat.time), 'hh:mm') !== format(new Date(arr[index + 1].time), 'hh:mm') ||
-              chat.from !== arr[index + 1].from
+              !next || chatTime !== format(new Date(next.created_at), 'hh:mm') || chat.sender_id !== next.sender_id
             //만약 그 전 채팅시간과 같다면 첫 채팅에만 프로필, 이후에는 프로필 없도록
             const showProfile: boolean =
-              index === 0 ||
-              format(new Date(chat.time), 'hh:mm') !== format(new Date(arr[index - 1]?.time), 'hh:mm') ||
-              chat.from !== arr[index - 1].from
+              !prev || chatTime !== format(new Date(prev.created_at), 'hh:mm') || chat.sender_id !== prev.sender_id
 
-            const chatDate = format(new Date(chat.time), 'yyyy-MM-dd')
-            const prevChatDate = index > 0 ? format(new Date(arr[index - 1].time), 'yyyy-MM-dd') : ''
+            const chatDate = format(new Date(chat.created_at), 'yyyy-MM-dd')
+            const prevChatDate = prev ? format(new Date(prev.created_at), 'yyyy-MM-dd') : ''
+            const timeText = format(new Date(chat.created_at), TIME_FORMAT).replace(' ', '')
 
-            return chat.from === user ? (
-              <>
+            return (
+              <Fragment key={chat.id}>
                 {chatDate !== prevChatDate && (
                   //다음 날에 채팅을 보낼 경우 날짜를 표시
                   <NextDayBox>
                     <NextDay>{chatDate}</NextDay>
                   </NextDayBox>
                 )}
-                <MyChatList>
-                  <MyChatContainer>
-                    <ChattingBox1>{chat.content}</ChattingBox1>
-                  </MyChatContainer>
-                  {showTime ? <ChatTime>{format(new Date(chat.time), 'hh:mma').replace(' ', '')}</ChatTime> : null}
-                </MyChatList>
-              </>
-            ) : (
-              <FriendContainer style={{ marginTop: showProfile ? '0.3rem' : 0 }}>
-                {showProfile ? (
-                  <ProfileImg
-                    src={nowChatting === opposite.userName ? imgPath.profile[opposite.uid] : imgPath.profile[0]}
-                  ></ProfileImg>
+                {chat.sender_id === me.id ? (
+                  <MyChatList>
+                    <MyChatContainer>
+                      <ChattingBox1>{chat.content}</ChattingBox1>
+                    </MyChatContainer>
+                    {showTime ? <ChatTime>{timeText}</ChatTime> : null}
+                  </MyChatList>
                 ) : (
-                  <NoProfileImg />
+                  <FriendContainer style={{ marginTop: showProfile ? '0.3rem' : 0 }}>
+                    {showProfile ? <ProfileImg src={resolveAvatarSrc(opposite?.avatar_url)} /> : <NoProfileImg />}
+                    <FriendChatList>
+                      <FriendChatContainer>
+                        {showProfile ? <FriendName>{opposite?.name}</FriendName> : null}
+                        <ChattingBox2>{chat.content}</ChattingBox2>
+                      </FriendChatContainer>
+                      {showTime ? <ChatTime>{timeText}</ChatTime> : null}
+                    </FriendChatList>
+                  </FriendContainer>
                 )}
-                <FriendChatList>
-                  <FriendChatContainer>
-                    {showProfile ? <FriendName>{nowChatting}</FriendName> : null}
-                    <ChattingBox2>{chat.content}</ChattingBox2>
-                  </FriendChatContainer>
-                  {showTime ? <ChatTime>{format(new Date(chat.time), 'hh:mma').replace(' ', '')}</ChatTime> : null}
-                </FriendChatList>
-              </FriendContainer>
+              </Fragment>
             )
           })}
         </ChattingList>
@@ -389,6 +338,7 @@ const ProfileImg = styled.img`
   width: 3.125rem;
   height: 3.125rem;
   border-radius: 50px;
+  object-fit: cover;
   margin-right: 0.5rem;
 `
 

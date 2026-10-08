@@ -1,78 +1,78 @@
 import styled from 'styled-components'
 import { colors } from '../style/colors'
-import { useEffect, useState } from 'react'
-import { imgPath } from '../style/imgPath'
-import userData from '../assets/data/userData.json'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useRecoilValue, useRecoilState } from 'recoil'
-import { chatDataState } from '../states/chatAtom'
 import { format } from 'date-fns'
+import { fetchOtherProfiles, Profile, resolveAvatarSrc } from '../api/profile'
+import { fetchMyMessages, Message, subscribeToMyMessages } from '../api/messages'
+import { useMyProfile } from '../states/profileAtom'
+
+const CONTENT_PREVIEW_LENGTH = 14
+
+//채팅 목록에서 14글자가 넘어가면 ...표시 되도록
+const editContent = (content: string) =>
+  content.length >= CONTENT_PREVIEW_LENGTH ? content.substring(0, CONTENT_PREVIEW_LENGTH) + '...' : content
 
 export const ChatList = ({ searchValue }: { searchValue: string }) => {
-  const [isNew, setIsNew] = useState(false)
-  const [chatData, setChatData] = useRecoilState(chatDataState)
+  const me = useMyProfile()
+  const [messages, setMessages] = useState<Message[]>([])
+  const [profiles, setProfiles] = useState<Profile[]>([])
   const today = format(new Date(), 'yyyy/MM/dd')
 
-  //local storage
-  useEffect(() => {
-    const Chattings = localStorage.getItem('chatData')
-    if (Chattings) {
-      setChatData(JSON.parse(Chattings))
+  const load = useCallback(async () => {
+    try {
+      const [myMessages, others] = await Promise.all([fetchMyMessages(me.id), fetchOtherProfiles(me.id)])
+      setMessages(myMessages)
+      setProfiles(others)
+    } catch (error) {
+      console.error(error)
     }
-  }, [])
+  }, [me.id])
 
-  //채팅 목록에서 14글자가 넘어가면 ...표시 되도록
-  const editContent = (content: String) => {
-    if (content.length >= 14) {
-      return content.substring(0, 14) + '...'
-    } else return content
-  }
+  useEffect(() => {
+    load()
+    return subscribeToMyMessages(me.id, load)
+  }, [me.id, load])
+
+  //상대별 마지막 메시지 (메시지는 시간순 정렬이므로 덮어쓰면 마지막 메시지가 남음)
+  const lastMessageByPartner = new Map<string, Message>()
+  messages.forEach((message) => {
+    const partnerId = message.sender_id === me.id ? message.receiver_id : message.sender_id
+    lastMessageByPartner.set(partnerId, message)
+  })
 
   return (
     <ChatContainer>
-      {userData
-        .filter((user: { uid: number; userName: string }) =>
-          user.userName.toLowerCase().includes(searchValue.toLowerCase()),
-        )
-        .filter((user: { uid: number; userName: string }) => chatData[user.uid]?.chat.length > 0)
-        .sort((a: { uid: number }, b: { uid: number }) => {
+      {profiles
+        .filter((friend) => lastMessageByPartner.has(friend.id))
+        .filter((friend) => friend.name.toLowerCase().includes(searchValue.toLowerCase()))
+        .sort(
           //마지막에 보낸 채팅방이 가장 위로 올 수 있도록
-          const lastChat_1 = new Date(chatData[a.uid]?.chat[chatData[a.uid]?.chat.length - 1]?.time).getTime()
-          const lastChat_2 = new Date(chatData[b.uid]?.chat[chatData[b.uid]?.chat.length - 1]?.time).getTime()
-          return lastChat_2 - lastChat_1
-        })
-        .map((user: { uid: number; userName: string }) =>
-          user.uid != 0 ? (
-            <Link to={`/chatting/${user.uid}`} style={{ display: 'contents' }}>
-              <ChatBox key={user.uid}>
+          (a, b) =>
+            new Date(lastMessageByPartner.get(b.id)!.created_at).getTime() -
+            new Date(lastMessageByPartner.get(a.id)!.created_at).getTime(),
+        )
+        .map((friend) => {
+          const lastMessage = lastMessageByPartner.get(friend.id)!
+          const lastTime = new Date(lastMessage.created_at)
+          const isToday = today === format(lastTime, 'yyyy/MM/dd')
+          return (
+            <Link key={friend.id} to={`/chatting/${friend.id}`} style={{ display: 'contents' }}>
+              <ChatBox>
                 <InfoBox>
                   <ChatProfileBox>
-                    <ChatProfileImg src={imgPath.profile[user.uid]} />
-                    {isNew ? <ChatProfileAlarm /> : null}
+                    <ChatProfileImg src={resolveAvatarSrc(friend.avatar_url)} />
                   </ChatProfileBox>
                   <ChatTextBox>
-                    <ChatName>{user.userName}</ChatName>
-                    <ChatContent>
-                      {editContent(chatData[user.uid]?.chat?.[chatData[user.uid]?.chat.length - 1]?.content) || ''}
-                    </ChatContent>
+                    <ChatName>{friend.name}</ChatName>
+                    <ChatContent>{editContent(lastMessage.content)}</ChatContent>
                   </ChatTextBox>
                 </InfoBox>
-                <ChatTime>
-                  {format(
-                    new Date(chatData[user.uid]?.chat?.[chatData[user.uid]?.chat.length - 1]?.time),
-                    today ===
-                      format(
-                        new Date(chatData[user.uid]?.chat?.[chatData[user.uid]?.chat.length - 1]?.time),
-                        'yyyy/MM/dd',
-                      )
-                      ? 'hh:mma'
-                      : 'MM/dd',
-                  ).replace(' ', '') || ''}
-                </ChatTime>
+                <ChatTime>{format(lastTime, isToday ? 'hh:mma' : 'MM/dd').replace(' ', '')}</ChatTime>
               </ChatBox>
             </Link>
-          ) : null,
-        )}
+          )
+        })}
     </ChatContainer>
   )
 }
@@ -110,6 +110,8 @@ const ChatProfileBox = styled.div`
 const ChatProfileImg = styled.img`
   width: 3.75rem;
   height: 3.75rem;
+  border-radius: 50%;
+  object-fit: cover;
 `
 const ChatProfileAlarm = styled.div`
   position: absolute;

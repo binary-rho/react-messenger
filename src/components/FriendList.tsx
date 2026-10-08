@@ -1,28 +1,31 @@
 import styled from 'styled-components'
 import { colors } from '../style/colors'
-import { useState } from 'react'
-import { imgPath } from '../style/imgPath'
-import userData from '../assets/data/userData.json'
+import { useEffect, useState } from 'react'
 import { ReactComponent as ArrowIcon } from '../assets/svgs/arrow.svg'
 import { Link } from 'react-router-dom'
+import { fetchOtherProfiles, Profile, resolveAvatarSrc } from '../api/profile'
+import { useMyProfile } from '../states/profileAtom'
 
 export const FriendList = ({ searchValue }: { searchValue: string }) => {
+  const me = useMyProfile()
+  const [friends, setFriends] = useState<Profile[]>([])
+
+  useEffect(() => {
+    fetchOtherProfiles(me.id).then(setFriends).catch(console.error)
+  }, [me.id])
+
   return (
     <FriendContainer>
-      {userData
-        .filter((user: { uid: number; userName: string }) =>
-          user.userName.toLowerCase().includes(searchValue.toLowerCase()),
-        )
-        .map((user: { uid: number; userName: string }) =>
-          user.uid != 0 ? (
-            <Link to={`/chatting/${user.uid}`} style={{ display: 'contents' }}>
-              <FriendBox key={user.uid}>
-                <Profile src={imgPath.profile[user.uid]} />
-                <FriendName>{user.userName}</FriendName> <ArrowIcon />
-              </FriendBox>
-            </Link>
-          ) : null,
-        )}
+      {friends
+        .filter((friend) => friend.name.toLowerCase().includes(searchValue.toLowerCase()))
+        .map((friend) => (
+          <Link key={friend.id} to={`/chatting/${friend.id}`} style={{ display: 'contents' }}>
+            <FriendBox>
+              <ProfileImg src={resolveAvatarSrc(friend.avatar_url)} />
+              <FriendName>{friend.name}</FriendName> <ArrowIcon />
+            </FriendBox>
+          </Link>
+        ))}
     </FriendContainer>
   )
 }
@@ -47,10 +50,11 @@ const FriendBox = styled.div`
   height: 4.375rem;
   background-color: ${colors.grey_50};
 `
-const Profile = styled.img`
+const ProfileImg = styled.img`
   width: 3.125rem;
   height: 3.125rem;
   border-radius: 3.125rem;
+  object-fit: cover;
   margin-right: 0.63rem;
 `
 const FriendName = styled.span`

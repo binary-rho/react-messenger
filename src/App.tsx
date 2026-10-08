@@ -4,7 +4,7 @@ import { colors } from './style/colors'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { Chatting } from './pages/Chatting'
 import Messenger from './pages/Messenger'
-import userData from './assets/data/userData.json'
+import { ProfileGate } from './components/ProfileGate'
 import { RecoilRoot } from 'recoil'
 
 function App() {
@@ -12,10 +12,12 @@ function App() {
     <RecoilRoot>
       <GlobalStyle />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Messenger />}></Route>
-          <Route path="/chatting/:id" element={<Chatting />}></Route>
-        </Routes>
+        <ProfileGate>
+          <Routes>
+            <Route path="/" element={<Messenger />}></Route>
+            <Route path="/chatting/:id" element={<Chatting />}></Route>
+          </Routes>
+        </ProfileGate>
       </BrowserRouter>
     </RecoilRoot>
   )
