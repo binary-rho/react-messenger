@@ -363,7 +363,7 @@ const FriendChatContainer = styled.div`
 
 const FriendName = styled.span`
   color: ${colors.grey_900};
-  font-family: 'Pretendard';
+  font-family: 'Pretendard-Medium';
   font-size: 14px;
   line-height: 120%; /* 16.8px */
   margin-bottom: 0.5rem;
