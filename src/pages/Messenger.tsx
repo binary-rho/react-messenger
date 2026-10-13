@@ -1,6 +1,7 @@
 import styled from 'styled-components'
 import { colors } from '../style/colors'
 import { imgPath } from '../style/imgPath'
+import { appFrame } from '../style/layout'
 import { TapBar } from '../components/TapBar'
 
 const Messenger = () => {
@@ -20,12 +21,7 @@ const Container = styled.div`
   flex-direction: column;
   background-color: ${colors.grey_50};
   align-items: center;
-  width: 375px;
-  height: 812px;
-  /* @media (max-width: 390px) {
-    width: auto;
-    height: 70vh;
-  } */
+  ${appFrame}
 `
 
 type SafeAreaImgProps = {

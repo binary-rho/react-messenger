@@ -48,6 +48,14 @@ const GlobalStyle = createGlobalStyle`
   :root[data-theme='dark'] img[src*='_Status_bar.'] {
     filter: invert(1);
   }
+  html, body, #root {
+    height: 100%;
+  }
+  #root {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
   *, *::before, *::after{
         box-sizing: border-box;
     }

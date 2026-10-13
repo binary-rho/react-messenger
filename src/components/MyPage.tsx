@@ -136,23 +136,24 @@ const MyPageContainer = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 54.2rem;
+  flex: 1;
+  min-height: 0;
   background-color: ${colors.grey_50};
 `
 const StatusBar = styled.img`
-  width: 375px;
+  width: 100%;
   position: absolute;
   top: 0rem;
   z-index: 1;
 `
 const BackgroundImg = styled.img`
-  width: 375px;
+  width: 100%;
   height: 9.5rem;
   position: absolute;
   top: 0rem;
 `
 const ProfileBox = styled.div`
-  width: 23.4375rem;
+  width: 100%;
   height: 6.625rem;
   display: flex;
   z-index: 1;

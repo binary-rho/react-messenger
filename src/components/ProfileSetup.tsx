@@ -1,6 +1,7 @@
 import styled from 'styled-components'
 import { useEffect, useRef, useState } from 'react'
 import { colors } from '../style/colors'
+import { appFrame } from '../style/layout'
 import { createProfile, MAX_NAME_LENGTH, resolveAvatarSrc, validateAvatarFile, validateName } from '../api/profile'
 import { Profile } from '../api/profile'
 
@@ -78,8 +79,7 @@ const SetupContainer = styled.form`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 375px;
-  height: 812px;
+  ${appFrame}
   padding: 0 1.25rem;
   background-color: ${colors.grey_50};
 `

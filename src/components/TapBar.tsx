@@ -125,7 +125,7 @@ const TopHeading = styled.div`
 
 const UserContainer = styled.div`
   display: flex;
-  width: 21rem;
+  align-self: stretch;
   height: 1.5rem;
   justify-content: space-between;
   align-items: center;
@@ -148,7 +148,7 @@ const InputContainer = styled.form`
 `
 
 const InputLine = styled.div`
-  width: 20.9375rem;
+  width: 100%;
   height: 2.5rem;
   outline: none;
   border: none;
@@ -196,7 +196,7 @@ const IconBox = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 7.8125rem;
+  flex: 1;
   height: 3rem;
 `
 

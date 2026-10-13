@@ -1,6 +1,7 @@
 import styled from 'styled-components'
 import { useState } from 'react'
 import { colors } from '../style/colors'
+import { appFrame } from '../style/layout'
 import { MIN_PASSWORD_LENGTH, signInWithEmail, signUpWithEmail } from '../api/auth'
 
 type AuthMode = 'signIn' | 'signUp'
@@ -105,8 +106,7 @@ const AuthContainer = styled.form`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 375px;
-  height: 812px;
+  ${appFrame}
   padding: 0 1.5rem;
   background-color: ${colors.grey_50};
 `

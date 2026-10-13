@@ -32,7 +32,8 @@ export const FriendList = ({ searchValue }: { searchValue: string }) => {
 
 const FriendContainer = styled.div`
   width: 100%;
-  height: 54.2rem;
+  flex: 1;
+  min-height: 0;
   background-color: ${colors.grey_50};
   overflow: auto;
   list-style-type: none;

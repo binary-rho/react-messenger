@@ -2,6 +2,7 @@ import styled from 'styled-components'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { colors } from '../style/colors'
+import { appFrame } from '../style/layout'
 import { imgPath } from '../style/imgPath'
 import { fetchOtherProfiles, Profile, resolveAvatarSrc } from '../api/profile'
 import { createGroup, MAX_GROUP_NAME_LENGTH, MIN_GROUP_FRIEND_COUNT, validateGroupName } from '../api/groups'
@@ -88,8 +89,7 @@ export const GroupCreate = () => {
 const Container = styled.form`
   display: flex;
   flex-direction: column;
-  width: 375px;
-  height: 812px;
+  ${appFrame}
   padding-bottom: 1.5rem;
   background-color: ${colors.grey_50};
 `

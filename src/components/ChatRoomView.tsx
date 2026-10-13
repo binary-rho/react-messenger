@@ -4,6 +4,7 @@ import { colors } from '../style/colors'
 import { imgPath } from '../style/imgPath'
 import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
+import { appFrame } from '../style/layout'
 import { Profile, resolveAvatarSrc } from '../api/profile'
 import { EMOJI_FILES, parseEmojiContent, resolveEmojiSrc, toEmojiContent } from '../lib/emoji'
 
@@ -218,8 +219,7 @@ const ChattingContainer = styled.div`
   flex-direction: column;
   background-color: ${colors.grey_50};
   align-items: center;
-  width: 375px;
-  height: 812px;
+  ${appFrame}
 `
 
 const SafeAreaImg = styled.img`
@@ -241,7 +241,7 @@ const TopHeading = styled.div`
 
 const UserContainer = styled.div`
   display: flex;
-  width: 21rem;
+  align-self: stretch;
   height: 1.5rem;
   justify-content: space-between;
   align-items: center;
@@ -293,7 +293,8 @@ const BottomBox = styled.div`
 const ChattingList = styled.div`
   display: flex;
   flex-direction: column;
-  height: 40rem;
+  flex: 1;
+  min-height: 0;
   width: 100%;
   padding: 0rem 1.25rem;
   overflow: auto;
@@ -364,6 +365,7 @@ const ChattingBox2 = styled.span`
 
 const EMOJI_MESSAGE_SIZE_PX = 100
 const EMOJI_PICKER_ITEM_SIZE_PX = 64
+const EMOJI_PICKER_MAX_HEIGHT_PX = 220
 
 const EmojiMessageImg = styled.img`
   width: ${EMOJI_MESSAGE_SIZE_PX}px;
@@ -372,26 +374,22 @@ const EmojiMessageImg = styled.img`
   margin-bottom: 0.5rem;
 `
 
-//입력창 바로 위에 뜨는 이모티콘 선택 패널
+//입력창 바로 위에 붙는 이모티콘 선택 패널 (열리면 채팅 목록이 그만큼 줄어든다)
 const EmojiPicker = styled.div`
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 60px;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(${EMOJI_PICKER_ITEM_SIZE_PX}px, 1fr));
   gap: 8px;
-  max-height: 220px;
+  flex-shrink: 0;
+  width: 100%;
+  max-height: ${EMOJI_PICKER_MAX_HEIGHT_PX}px;
   padding: 12px 16px;
   overflow-y: auto;
-  box-sizing: border-box;
   background-color: ${colors.surface};
   border-top: 1px solid ${colors.grey_100};
-  z-index: 1;
 `
 
 const EmojiEmptyText = styled.span`
-  width: 100%;
+  grid-column: 1 / -1;
   text-align: center;
   color: ${colors.grey_400};
   font-family: 'Pretendard-Light';
@@ -439,7 +437,8 @@ const NoProfileImg = styled.div`
 const FriendChatContainer = styled.div`
   display: flex;
   flex-direction: column;
-  width: 240px;
+  width: 100%;
+  max-width: 15rem;
 `
 
 const FriendName = styled.span`
@@ -483,7 +482,8 @@ const PlusIcon = styled.img`
 `
 
 const InputBox = styled.input`
-  width: 264px;
+  flex: 1;
+  min-width: 0;
   outline: none;
   border: none;
   border-radius: 6px;
