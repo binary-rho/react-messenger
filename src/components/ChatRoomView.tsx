@@ -99,7 +99,6 @@ export const ChatRoomView = ({
   return (
     <ChattingContainer>
       <TopHeading>
-        <SafeAreaImg src={imgPath.path[0]} />
         <UserContainer>
           <Link to="/" style={{ display: 'contents' }}>
             <BackIcon src={imgPath.path[3]} />
@@ -222,9 +221,6 @@ const ChattingContainer = styled.div`
   ${appFrame}
 `
 
-const SafeAreaImg = styled.img`
-  width: 100%;
-`
 const SafeAreaImg2 = styled.img`
   width: 100%;
   background-color: ${colors.surface};
@@ -235,6 +231,7 @@ const TopHeading = styled.div`
   flex-direction: column;
   height: 2.3;
   width: 100%;
+  padding-top: 1rem;
   align-items: center;
   justify-content: center;
 `
@@ -250,7 +247,8 @@ const UserContainer = styled.div`
 const UserNameBox = styled.div`
   display: inline-flex;
   align-items: flex-start;
-  width: 283px;
+  flex: 1;
+  min-width: 0;
   height: 28px;
 `
 const UserName = styled.span`
