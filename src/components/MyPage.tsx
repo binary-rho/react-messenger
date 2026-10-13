@@ -8,6 +8,7 @@ import { ReactComponent as LinkIcon } from '../assets/svgs/link.svg'
 import { signOut } from '../api/auth'
 import { resolveAvatarSrc, updateProfile, validateAvatarFile, validateName } from '../api/profile'
 import { myProfileState, useMyProfile } from '../states/profileAtom'
+import { isWebNotificationSupported, requestNotificationPermission } from '../lib/notification'
 
 export const MyPage = () => {
   const me = useMyProfile()
@@ -15,6 +16,9 @@ export const MyPage = () => {
   const [editName, setEditName] = useState<boolean>(false)
   const [inputValue, setInputValue] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>(
+    isWebNotificationSupported() ? Notification.permission : 'unsupported',
+  )
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value)
@@ -40,6 +44,10 @@ export const MyPage = () => {
     await saveProfile({ name: inputValue })
     setInputValue('')
     setEditName(false)
+  }
+
+  const onClickEnableNotification = async () => {
+    setNotificationPermission(await requestNotificationPermission())
   }
 
   const onSelectAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -113,6 +121,13 @@ export const MyPage = () => {
             </a>
           </SNSLine>
         </SNSBox>
+        <NotificationButton
+          type="button"
+          onClick={onClickEnableNotification}
+          disabled={notificationPermission !== 'default'}
+        >
+          {notificationButtonLabel[notificationPermission]}
+        </NotificationButton>
         <LogoutButton type="button" onClick={() => signOut().catch(console.error)}>
           로그아웃
         </LogoutButton>
@@ -121,8 +136,31 @@ export const MyPage = () => {
   )
 }
 
-const LogoutButton = styled.button`
+const notificationButtonLabel: Record<NotificationPermission | 'unsupported', string> = {
+  default: '알림 켜기',
+  granted: '알림 켜짐',
+  denied: '알림이 차단됨 (브라우저 설정에서 허용해주세요)',
+  unsupported: '이 브라우저는 알림을 지원하지 않아요',
+}
+
+const NotificationButton = styled.button`
   margin: 1.5rem 1.25rem 0 1.25rem;
+  height: 2.75rem;
+  border: none;
+  border-radius: 0.375rem;
+  background-color: ${colors.surface};
+  color: ${colors.grey_700};
+  font-family: 'Pretendard-Medium';
+  font-size: 1rem;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: default;
+    color: ${colors.grey_400};
+  }
+`
+const LogoutButton = styled.button`
+  margin: 0.5rem 1.25rem 0 1.25rem;
   height: 2.75rem;
   border: none;
   border-radius: 0.375rem;

@@ -18,7 +18,7 @@ function App() {
       <ThemeToggleButton />
       <BrowserRouter>
         <ProfileGate>
-          {window.electronAPI && <MessageNotifier />}
+          <MessageNotifier />
           <Routes>
             <Route path="/" element={<Messenger />}></Route>
             <Route path="/chatting/:id" element={<Chatting />}></Route>
