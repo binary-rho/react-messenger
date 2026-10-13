@@ -9,6 +9,7 @@ import { GroupCreate } from './pages/GroupCreate'
 import Messenger from './pages/Messenger'
 import { ProfileGate } from './components/ProfileGate'
 import { RecoilRoot } from 'recoil'
+import { MessageNotifier } from './components/MessageNotifier'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
       <ThemeToggleButton />
       <BrowserRouter>
         <ProfileGate>
+          {window.electronAPI && <MessageNotifier />}
           <Routes>
             <Route path="/" element={<Messenger />}></Route>
             <Route path="/chatting/:id" element={<Chatting />}></Route>

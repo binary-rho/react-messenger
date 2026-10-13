@@ -24,3 +24,7 @@ yarn-error.log*
 
 # env
 .env
+
+# electron
+/electron/node_modules
+/electron/dist

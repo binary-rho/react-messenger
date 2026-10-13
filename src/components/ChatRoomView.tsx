@@ -231,7 +231,7 @@ const TopHeading = styled.div`
   flex-direction: column;
   height: 2.3;
   width: 100%;
-  padding-top: 1rem;
+  padding-top: calc(1rem + 8px);
   align-items: center;
   justify-content: center;
 `
