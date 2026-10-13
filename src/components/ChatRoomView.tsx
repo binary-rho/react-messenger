@@ -5,6 +5,7 @@ import { imgPath } from '../style/imgPath'
 import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
 import { Profile, resolveAvatarSrc } from '../api/profile'
+import { EMOJI_FILES, parseEmojiContent, resolveEmojiSrc, toEmojiContent } from '../lib/emoji'
 
 const TIME_FORMAT = 'hh:mma'
 const UNKNOWN_SENDER_NAME = '알 수 없음'
@@ -35,6 +36,7 @@ export const ChatRoomView = ({
   overlay?: React.ReactNode
 }) => {
   const [inputValue, setInputValue] = useState<string>('')
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState<boolean>(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const chatListRef = useRef<HTMLDivElement>(null)
 
@@ -72,6 +74,23 @@ export const ChatRoomView = ({
       setInputValue(content)
       alert('메시지를 보내지 못했어요. 다시 시도해주세요.')
     }
+  }
+
+  const onEmojiSelect = async (fileName: string) => {
+    setIsEmojiPickerOpen(false)
+    try {
+      await onSend(toEmojiContent(fileName))
+    } catch (error) {
+      console.error(error)
+      alert('이모티콘을 보내지 못했어요. 다시 시도해주세요.')
+    }
+  }
+
+  //이모티콘 메시지는 말풍선 없이 이미지로, 일반 메시지는 말풍선으로 표시
+  const renderContent = (content: string, Bubble: typeof ChattingBox1) => {
+    const emojiFileName = parseEmojiContent(content)
+    if (emojiFileName) return <EmojiMessageImg src={resolveEmojiSrc(emojiFileName)} alt="이모티콘" />
+    return <Bubble>{content}</Bubble>
   }
 
   const isChatOn = messages.length > 0
@@ -120,7 +139,7 @@ export const ChatRoomView = ({
                 {chat.sender_id === myId ? (
                   <MyChatList>
                     <MyChatContainer>
-                      <ChattingBox1>{chat.content}</ChattingBox1>
+                      {renderContent(chat.content, ChattingBox1)}
                     </MyChatContainer>
                     {showTime ? <ChatTime>{timeText}</ChatTime> : null}
                   </MyChatList>
@@ -130,7 +149,7 @@ export const ChatRoomView = ({
                     <FriendChatList>
                       <FriendChatContainer>
                         {showProfile ? <FriendName>{sender?.name ?? UNKNOWN_SENDER_NAME}</FriendName> : null}
-                        <ChattingBox2>{chat.content}</ChattingBox2>
+                        {renderContent(chat.content, ChattingBox2)}
                       </FriendChatContainer>
                       {showTime ? <ChatTime>{timeText}</ChatTime> : null}
                     </FriendChatList>
@@ -146,10 +165,23 @@ export const ChatRoomView = ({
           <NoChatText>작성된 메시지가 없습니다.</NoChatText>
         </NoChattingList>
       )}
+      {isEmojiPickerOpen && (
+        <EmojiPicker>
+          {EMOJI_FILES.length === 0 ? (
+            <EmojiEmptyText>등록된 이모티콘이 없어요.</EmojiEmptyText>
+          ) : (
+            EMOJI_FILES.map((fileName) => (
+              <EmojiButton key={fileName} type="button" onClick={() => onEmojiSelect(fileName)}>
+                <EmojiPickerImg src={resolveEmojiSrc(fileName)} alt={fileName} />
+              </EmojiButton>
+            ))
+          )}
+        </EmojiPicker>
+      )}
       <BottomBox>
         <ChatArea>
           <InputContainer onSubmit={onSubmit}>
-            <PlusIcon src={imgPath.path[4]} />
+            <PlusIcon src={imgPath.path[4]} onClick={() => setIsEmojiPickerOpen((isOpen) => !isOpen)} />
             <InputBox
               placeholder="메시지를 작성해주세요"
               ref={inputRef}
@@ -328,6 +360,55 @@ const ChattingBox2 = styled.span`
   font-family: 'Pretendard-Light';
   margin-bottom: 0.5rem;
   word-break: break-all;
+`
+
+const EMOJI_MESSAGE_SIZE_PX = 100
+const EMOJI_PICKER_ITEM_SIZE_PX = 64
+
+const EmojiMessageImg = styled.img`
+  width: ${EMOJI_MESSAGE_SIZE_PX}px;
+  height: ${EMOJI_MESSAGE_SIZE_PX}px;
+  object-fit: contain;
+  margin-bottom: 0.5rem;
+`
+
+//입력창 바로 위에 뜨는 이모티콘 선택 패널
+const EmojiPicker = styled.div`
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 60px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: 220px;
+  padding: 12px 16px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  background-color: ${colors.surface};
+  border-top: 1px solid ${colors.grey_100};
+  z-index: 1;
+`
+
+const EmojiEmptyText = styled.span`
+  width: 100%;
+  text-align: center;
+  color: ${colors.grey_400};
+  font-family: 'Pretendard-Light';
+  font-size: 14px;
+`
+
+const EmojiButton = styled.button`
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+`
+
+const EmojiPickerImg = styled.img`
+  width: ${EMOJI_PICKER_ITEM_SIZE_PX}px;
+  height: ${EMOJI_PICKER_ITEM_SIZE_PX}px;
+  object-fit: contain;
 `
 
 const FriendChatList = styled.div`

@@ -7,13 +7,16 @@ import { fetchOtherProfiles, Profile, resolveAvatarSrc } from '../api/profile'
 import { fetchMyMessages, Message, subscribeToMyMessages } from '../api/messages'
 import { fetchMyGroupMessages, fetchMyGroups, Group, GroupMessage, subscribeToGroupMessages } from '../api/groups'
 import { useMyProfile } from '../states/profileAtom'
+import { EMOJI_PREVIEW_TEXT, parseEmojiContent } from '../lib/emoji'
 
 const CONTENT_PREVIEW_LENGTH = 14
 const NEW_GROUP_CONTENT = '단톡방이 만들어졌어요.'
 
 //채팅 목록에서 14글자가 넘어가면 ...표시 되도록
-const editContent = (content: string) =>
-  content.length >= CONTENT_PREVIEW_LENGTH ? content.substring(0, CONTENT_PREVIEW_LENGTH) + '...' : content
+const editContent = (content: string) => {
+  if (parseEmojiContent(content)) return EMOJI_PREVIEW_TEXT
+  return content.length >= CONTENT_PREVIEW_LENGTH ? content.substring(0, CONTENT_PREVIEW_LENGTH) + '...' : content
+}
 
 //1:1 채팅과 단톡을 한 목록에서 보여주기 위한 형태
 interface ChatListItem {
