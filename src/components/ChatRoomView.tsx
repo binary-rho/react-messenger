@@ -28,6 +28,7 @@ export const ChatRoomView = ({
   onSend,
   hasMore,
   onLoadOlder,
+  onSenderClick,
   onMenuClick,
   overlay,
 }: {
@@ -38,6 +39,7 @@ export const ChatRoomView = ({
   onSend: (content: string) => Promise<void>
   hasMore: boolean
   onLoadOlder: () => Promise<void>
+  onSenderClick?: (senderId: string) => void
   onMenuClick?: () => void
   overlay?: React.ReactNode
 }) => {
@@ -165,7 +167,15 @@ export const ChatRoomView = ({
                   </MyChatList>
                 ) : (
                   <FriendContainer style={{ marginTop: showProfile ? '0.3rem' : 0 }}>
-                    {showProfile ? <ProfileImg src={resolveAvatarSrc(sender?.avatar_url)} /> : <NoProfileImg />}
+                    {showProfile ? (
+                      <ProfileImg
+                        src={resolveAvatarSrc(sender?.avatar_url)}
+                        onClick={() => onSenderClick?.(chat.sender_id)}
+                        style={{ cursor: onSenderClick ? 'pointer' : 'default' }}
+                      />
+                    ) : (
+                      <NoProfileImg />
+                    )}
                     <FriendChatList>
                       <FriendChatContainer>
                         {showProfile ? <FriendName>{sender?.name ?? UNKNOWN_SENDER_NAME}</FriendName> : null}

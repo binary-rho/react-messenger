@@ -16,6 +16,7 @@ import { usePagedMessages } from '../lib/usePagedMessages'
 import { useMyProfile } from '../states/profileAtom'
 import { ChatRoomView } from '../components/ChatRoomView'
 import { GroupMenu } from '../components/GroupMenu'
+import { ProfileCard } from '../components/ProfileCard'
 
 export const GroupChatting = () => {
   const { id } = useParams()
@@ -26,6 +27,7 @@ export const GroupChatting = () => {
   //나간 사람 등 현재 멤버가 아닌 발신자의 프로필
   const [formerSenders, setFormerSenders] = useState<Profile[]>([])
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false)
+  const [selectedSenderId, setSelectedSenderId] = useState<string | null>(null)
 
   const { messages, hasMore, loadOlder, appendMessage } = usePagedMessages<GroupMessage>(id, (beforeId) =>
     fetchGroupMessagesPage(id!, beforeId),
@@ -81,6 +83,11 @@ export const GroupChatting = () => {
     }
   }
 
+  //단톡 히스토리를 개인채팅으로 교체해서, 개인채팅에서 뒤로가기 하면 채팅목록으로 돌아가게 함
+  const onChatStart = (senderId: string) => navigate(`/chatting/${senderId}`, { replace: true })
+
+  const selectedSender = selectedSenderId ? senders.get(selectedSenderId) : undefined
+
   const title = group ? `${group.name} (${members.length})` : ''
 
   return (
@@ -92,17 +99,27 @@ export const GroupChatting = () => {
       onSend={onSend}
       hasMore={hasMore}
       onLoadOlder={loadOlder}
+      onSenderClick={setSelectedSenderId}
       onMenuClick={() => setIsMenuOpen(true)}
       overlay={
-        isMenuOpen && (
-          <GroupMenu
-            members={members}
-            myId={me.id}
-            onInvite={onInvite}
-            onLeave={onLeave}
-            onClose={() => setIsMenuOpen(false)}
-          />
-        )
+        <>
+          {isMenuOpen && (
+            <GroupMenu
+              members={members}
+              myId={me.id}
+              onInvite={onInvite}
+              onLeave={onLeave}
+              onClose={() => setIsMenuOpen(false)}
+            />
+          )}
+          {selectedSender && (
+            <ProfileCard
+              profile={selectedSender}
+              onChatStart={() => onChatStart(selectedSender.id)}
+              onClose={() => setSelectedSenderId(null)}
+            />
+          )}
+        </>
       }
     />
   )
