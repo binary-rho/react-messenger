@@ -22,7 +22,8 @@ export const FriendList = ({ searchValue }: { searchValue: string }) => {
           <Link key={friend.id} to={`/chatting/${friend.id}`} style={{ display: 'contents' }}>
             <FriendBox>
               <ProfileImg src={resolveAvatarSrc(friend.avatar_url)} />
-              <FriendName>{friend.name}</FriendName> <ArrowIcon />
+              <FriendName>{friend.name}</FriendName>
+              <ArrowIcon style={{ flexShrink: 0 }} />
             </FriendBox>
           </Link>
         ))}
@@ -57,11 +58,16 @@ const ProfileImg = styled.img`
   border-radius: 3.125rem;
   object-fit: cover;
   margin-right: 0.63rem;
+  flex-shrink: 0;
 `
 const FriendName = styled.span`
   color: ${colors.grey_700};
   font-family: 'Pretendard-Medium';
   font-size: 1.125rem;
   line-height: 1.575rem;
-  width: 16.5rem;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `
