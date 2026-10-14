@@ -117,8 +117,7 @@ export const TapBar = () => {
 const TopHeading = styled.div`
   display: flex;
   flex-direction: column;
-  height: 2.3rem;
-  padding-top: calc(1rem + 8px);
+  padding: 24px 0 16px;
   width: 100%;
   align-items: center;
   justify-content: center;
@@ -130,7 +129,7 @@ const UserContainer = styled.div`
   height: 1.5rem;
   justify-content: space-between;
   align-items: center;
-  margin: 0rem 1.25rem 0.9rem 1.25rem;
+  margin: 0rem 1.25rem;
   z-index: 1;
 `
 
