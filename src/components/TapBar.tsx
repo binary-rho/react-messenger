@@ -118,6 +118,7 @@ const TopHeading = styled.div`
   display: flex;
   flex-direction: column;
   height: 2.3rem;
+  padding-top: calc(1rem + 8px);
   width: 100%;
   align-items: center;
   justify-content: center;

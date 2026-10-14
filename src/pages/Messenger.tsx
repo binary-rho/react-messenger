@@ -7,9 +7,8 @@ import { TapBar } from '../components/TapBar'
 const Messenger = () => {
   return (
     <Container>
-      <SafeAreaImg src={imgPath.path[0]} isTop={true} />
       <TapBar />
-      <SafeAreaImg2 src={imgPath.path[2]} isTop={false} />
+      <SafeAreaImg2 src={imgPath.path[2]} />
     </Container>
   )
 }
@@ -17,6 +16,7 @@ const Messenger = () => {
 export default Messenger
 
 const Container = styled.div`
+  position: relative;
   display: flex;
   flex-direction: column;
   background-color: ${colors.grey_50};
@@ -24,15 +24,7 @@ const Container = styled.div`
   ${appFrame}
 `
 
-type SafeAreaImgProps = {
-  isTop?: boolean
-}
-
-const SafeAreaImg = styled.img<SafeAreaImgProps>`
-  width: 100%;
-  background-color: transparent;
-`
-const SafeAreaImg2 = styled.img<SafeAreaImgProps>`
+const SafeAreaImg2 = styled.img`
   width: 100%;
   background-color: ${colors.surface};
 `

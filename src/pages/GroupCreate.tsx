@@ -52,7 +52,6 @@ export const GroupCreate = () => {
 
   return (
     <Container onSubmit={onSubmit}>
-      <SafeAreaImg src={imgPath.path[0]} />
       <Header>
         <Link to="/" style={{ display: 'contents' }}>
           <BackIcon src={imgPath.path[3]} />
@@ -93,14 +92,11 @@ const Container = styled.form`
   padding-bottom: 1.5rem;
   background-color: ${colors.grey_50};
 `
-const SafeAreaImg = styled.img`
-  width: 100%;
-`
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 1.25rem 1rem 1.25rem;
+  padding: calc(1rem + 8px) 1.25rem 1rem 1.25rem;
 `
 const BackIcon = styled.img`
   width: 24px;
