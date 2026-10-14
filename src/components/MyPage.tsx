@@ -8,6 +8,7 @@ import { signOut } from '../api/auth'
 import { resolveAvatarSrc, updateProfile, validateAvatarFile, validateName } from '../api/profile'
 import { myProfileState, useMyProfile } from '../states/profileAtom'
 import { NotificationToggle } from './NotificationToggle'
+import { ThemeToggle } from './ThemeToggle'
 
 export const MyPage = () => {
   const me = useMyProfile()
@@ -87,7 +88,10 @@ export const MyPage = () => {
             </NameBox>
           </TextBox>
         </ProfileBox>
-        <NotificationToggle />
+        <SettingList>
+          <NotificationToggle />
+          <ThemeToggle />
+        </SettingList>
         <LogoutButton type="button" onClick={() => signOut().catch(console.error)}>
           로그아웃
         </LogoutButton>
@@ -99,6 +103,9 @@ export const MyPage = () => {
 //프로필 사진 윗부분이 배경 위에 걸쳐 보이는 높이
 const BACKGROUND_HEIGHT_REM = 8
 
+const SettingList = styled.div`
+  margin-top: 1rem;
+`
 const LogoutButton = styled.button`
   margin: 0.5rem 1.25rem 0 1.25rem;
   height: 2.75rem;

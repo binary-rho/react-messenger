@@ -1,7 +1,7 @@
 import { createGlobalStyle } from 'styled-components'
 import reset from 'styled-reset'
 import { colors, themeCssVariables } from './style/colors'
-import { ThemeToggleButton } from './components/ThemeToggleButton'
+import { ThemeSync } from './components/ThemeSync'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { Chatting } from './pages/Chatting'
 import { GroupChatting } from './pages/GroupChatting'
@@ -15,7 +15,7 @@ function App() {
   return (
     <RecoilRoot>
       <GlobalStyle />
-      <ThemeToggleButton />
+      <ThemeSync />
       <BrowserRouter>
         <ProfileGate>
           <MessageNotifier />
