@@ -12,24 +12,27 @@ export const isMessageOfConversation = (message: Message, userA: string, userB: 
   (message.sender_id === userA && message.receiver_id === userB) ||
   (message.sender_id === userB && message.receiver_id === userA)
 
-export const fetchConversation = async (myId: string, otherId: string): Promise<Message[]> => {
-  const { data, error } = await supabase
+export const MESSAGE_PAGE_SIZE = 50
+
+//최신 메시지부터 MESSAGE_PAGE_SIZE개를 가져오고, beforeId가 있으면 그보다 이전 메시지를 가져옴 (반환은 오래된 순)
+export const fetchConversationPage = async (myId: string, otherId: string, beforeId?: number): Promise<Message[]> => {
+  let query = supabase
     .from('messages')
     .select('*')
     .or(`and(sender_id.eq.${myId},receiver_id.eq.${otherId}),and(sender_id.eq.${otherId},receiver_id.eq.${myId})`)
-    .order('created_at', { ascending: true })
+    .order('id', { ascending: false })
+    .limit(MESSAGE_PAGE_SIZE)
+  if (beforeId !== undefined) query = query.lt('id', beforeId)
+  const { data, error } = await query
   if (error) throw error
-  return data ?? []
+  return (data ?? []).reverse()
 }
 
-export const fetchMyMessages = async (myId: string): Promise<Message[]> => {
-  const { data, error } = await supabase
-    .from('messages')
-    .select('*')
-    .or(`sender_id.eq.${myId},receiver_id.eq.${myId}`)
-    .order('created_at', { ascending: true })
+//상대별 마지막 메시지 하나씩만 가져옴 (supabase/last_messages.sql의 함수 필요)
+export const fetchMyLastMessages = async (): Promise<Message[]> => {
+  const { data, error } = await supabase.rpc('my_last_messages')
   if (error) throw error
-  return data ?? []
+  return (data ?? []) as Message[]
 }
 
 export const sendMessage = async (senderId: string, receiverId: string, content: string): Promise<Message> => {

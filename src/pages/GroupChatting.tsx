@@ -5,13 +5,14 @@ import {
   addGroupMembers,
   fetchGroupById,
   fetchGroupMembers,
-  fetchGroupMessages,
+  fetchGroupMessagesPage,
   Group,
   GroupMessage,
   leaveGroup,
   sendGroupMessage,
   subscribeToGroupMessages,
 } from '../api/groups'
+import { usePagedMessages } from '../lib/usePagedMessages'
 import { useMyProfile } from '../states/profileAtom'
 import { ChatRoomView } from '../components/ChatRoomView'
 import { GroupMenu } from '../components/GroupMenu'
@@ -24,12 +25,11 @@ export const GroupChatting = () => {
   const [members, setMembers] = useState<Profile[]>([])
   //나간 사람 등 현재 멤버가 아닌 발신자의 프로필
   const [formerSenders, setFormerSenders] = useState<Profile[]>([])
-  const [messages, setMessages] = useState<GroupMessage[]>([])
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false)
 
-  //id 중복 없이 메시지 추가 (직접 보낸 메시지가 realtime으로도 들어오기 때문)
-  const appendMessage = (message: GroupMessage) =>
-    setMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]))
+  const { messages, hasMore, loadOlder, appendMessage } = usePagedMessages<GroupMessage>(id, (beforeId) =>
+    fetchGroupMessagesPage(id!, beforeId),
+  )
 
   const loadMembers = (groupId: string) => fetchGroupMembers(groupId).then(setMembers).catch(console.error)
 
@@ -37,11 +37,10 @@ export const GroupChatting = () => {
     if (!id) return
     fetchGroupById(id).then(setGroup).catch(console.error)
     loadMembers(id)
-    fetchGroupMessages(id).then(setMessages).catch(console.error)
     return subscribeToGroupMessages((message) => {
       if (message.group_id === id) appendMessage(message)
     })
-  }, [id])
+  }, [id, appendMessage])
 
   //멤버 목록에 없는 발신자(나간 사람, 방금 초대된 사람)의 프로필을 따로 불러옴
   useEffect(() => {
@@ -91,6 +90,8 @@ export const GroupChatting = () => {
       senders={senders}
       myId={me.id}
       onSend={onSend}
+      hasMore={hasMore}
+      onLoadOlder={loadOlder}
       onMenuClick={() => setIsMenuOpen(true)}
       overlay={
         isMenuOpen && (

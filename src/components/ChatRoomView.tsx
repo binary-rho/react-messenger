@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect, useRef } from 'react'
+import { Fragment, useState, useLayoutEffect, useRef } from 'react'
 import styled from 'styled-components'
 import { colors } from '../style/colors'
 import { imgPath } from '../style/imgPath'
@@ -10,6 +10,7 @@ import { EMOJI_FILES, parseEmojiContent, resolveEmojiSrc, toEmojiContent } from 
 
 const TIME_FORMAT = 'hh:mma'
 const UNKNOWN_SENDER_NAME = '알 수 없음'
+const LOAD_OLDER_SCROLL_THRESHOLD_PX = 80
 
 export interface ChatRoomMessage {
   id: number
@@ -25,6 +26,8 @@ export const ChatRoomView = ({
   senders,
   myId,
   onSend,
+  hasMore,
+  onLoadOlder,
   onMenuClick,
   overlay,
 }: {
@@ -33,6 +36,8 @@ export const ChatRoomView = ({
   senders: Map<string, Profile>
   myId: string
   onSend: (content: string) => Promise<void>
+  hasMore: boolean
+  onLoadOlder: () => Promise<void>
   onMenuClick?: () => void
   overlay?: React.ReactNode
 }) => {
@@ -41,11 +46,26 @@ export const ChatRoomView = ({
   const inputRef = useRef<HTMLInputElement>(null)
   const chatListRef = useRef<HTMLDivElement>(null)
 
-  //새 메시지가 오면 가장 아래로 스크롤
-  useEffect(() => {
+  const prevScrollHeightRef = useRef<number>(0)
+  const prevFirstMessageIdRef = useRef<number | undefined>(undefined)
+
+  //이전 메시지가 위에 붙으면 보던 위치를 유지하고, 그 외(첫 로드, 새 메시지)에는 가장 아래로 스크롤
+  useLayoutEffect(() => {
     const element = chatListRef.current
-    if (element) element.scrollTop = element.scrollHeight
+    if (!element) return
+    const firstMessageId = messages[0]?.id
+    const prevFirstMessageId = prevFirstMessageIdRef.current
+    const isOlderPrepended =
+      prevFirstMessageId !== undefined && firstMessageId !== undefined && firstMessageId < prevFirstMessageId
+    if (isOlderPrepended) element.scrollTop += element.scrollHeight - prevScrollHeightRef.current
+    else element.scrollTop = element.scrollHeight
+    prevScrollHeightRef.current = element.scrollHeight
+    prevFirstMessageIdRef.current = firstMessageId
   }, [messages])
+
+  const onChatListScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (hasMore && e.currentTarget.scrollTop < LOAD_OLDER_SCROLL_THRESHOLD_PX) onLoadOlder()
+  }
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value)
@@ -111,7 +131,7 @@ export const ChatRoomView = ({
         </UserContainer>
       </TopHeading>
       {isChatOn ? (
-        <ChattingList ref={chatListRef}>
+        <ChattingList ref={chatListRef} onScroll={onChatListScroll}>
           {messages.map((chat, index, arr) => {
             const chatTime = format(new Date(chat.created_at), 'hh:mm')
             const prev = arr[index - 1]

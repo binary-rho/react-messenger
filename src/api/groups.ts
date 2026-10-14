@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase'
 import { Profile } from './profile'
+import { MESSAGE_PAGE_SIZE } from './messages'
 
 export interface Group {
   id: string
@@ -63,21 +64,25 @@ export const fetchGroupMembers = async (groupId: string): Promise<Profile[]> => 
   return ((data ?? []) as unknown as { profiles: Profile }[]).map((row) => row.profiles)
 }
 
-export const fetchGroupMessages = async (groupId: string): Promise<GroupMessage[]> => {
-  const { data, error } = await supabase
+//최신 메시지부터 GROUP_MESSAGE_PAGE_SIZE개를 가져오고, beforeId가 있으면 그보다 이전 메시지를 가져옴 (반환은 오래된 순)
+export const fetchGroupMessagesPage = async (groupId: string, beforeId?: number): Promise<GroupMessage[]> => {
+  let query = supabase
     .from('group_messages')
     .select('*')
     .eq('group_id', groupId)
-    .order('created_at', { ascending: true })
+    .order('id', { ascending: false })
+    .limit(MESSAGE_PAGE_SIZE)
+  if (beforeId !== undefined) query = query.lt('id', beforeId)
+  const { data, error } = await query
   if (error) throw error
-  return data ?? []
+  return (data ?? []).reverse()
 }
 
-//내가 속한 모든 그룹의 메시지 (채팅 목록의 마지막 메시지용)
-export const fetchMyGroupMessages = async (): Promise<GroupMessage[]> => {
-  const { data, error } = await supabase.from('group_messages').select('*').order('created_at', { ascending: true })
+//내가 속한 각 그룹의 마지막 메시지 하나씩 (supabase/last_messages.sql의 함수 필요)
+export const fetchMyLastGroupMessages = async (): Promise<GroupMessage[]> => {
+  const { data, error } = await supabase.rpc('my_last_group_messages')
   if (error) throw error
-  return data ?? []
+  return (data ?? []) as GroupMessage[]
 }
 
 export const sendGroupMessage = async (groupId: string, senderId: string, content: string): Promise<GroupMessage> => {

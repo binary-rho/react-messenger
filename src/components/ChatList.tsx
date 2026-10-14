@@ -4,8 +4,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
 import { fetchOtherProfiles, Profile, resolveAvatarSrc } from '../api/profile'
-import { fetchMyMessages, Message, subscribeToMyMessages } from '../api/messages'
-import { fetchMyGroupMessages, fetchMyGroups, Group, GroupMessage, subscribeToGroupMessages } from '../api/groups'
+import { fetchMyLastMessages, Message, subscribeToMyMessages } from '../api/messages'
+import { fetchMyLastGroupMessages, fetchMyGroups, Group, GroupMessage, subscribeToGroupMessages } from '../api/groups'
 import { useMyProfile } from '../states/profileAtom'
 import { EMOJI_PREVIEW_TEXT, parseEmojiContent } from '../lib/emoji'
 
@@ -40,10 +40,10 @@ export const ChatList = ({ searchValue }: { searchValue: string }) => {
   const load = useCallback(async () => {
     try {
       const [myMessages, others, myGroups, myGroupMessages] = await Promise.all([
-        fetchMyMessages(me.id),
+        fetchMyLastMessages(),
         fetchOtherProfiles(me.id),
         fetchMyGroups(),
-        fetchMyGroupMessages(),
+        fetchMyLastGroupMessages(),
       ])
       setMessages(myMessages)
       setProfiles(others)
@@ -64,7 +64,7 @@ export const ChatList = ({ searchValue }: { searchValue: string }) => {
     }
   }, [me.id, load])
 
-  //상대별 마지막 메시지 (메시지는 시간순 정렬이므로 덮어쓰면 마지막 메시지가 남음)
+  //상대별 마지막 메시지 (서버에서 상대별 마지막 메시지만 내려옴)
   const lastMessageByPartner = new Map<string, Message>()
   messages.forEach((message) => {
     const partnerId = message.sender_id === me.id ? message.receiver_id : message.sender_id
