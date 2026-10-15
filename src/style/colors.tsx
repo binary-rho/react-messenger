@@ -1,7 +1,8 @@
 const lightPalette = {
   green: '#4EDB28',
   purple: '#5D5FEF',
-  white: '#FFFFFF', // 강조색(보라/초록) 위의 글자색 — 테마와 무관하게 고정
+  red: '#F04438',
+  white: '#FFFFFF', // 강조색(보라/초록/빨강) 위의 글자색 — 테마와 무관하게 고정
   surface: '#FFFFFF',
   outside: '#292929',
 
@@ -16,6 +17,7 @@ const lightPalette = {
 const darkPalette: typeof lightPalette = {
   green: '#4EDB28',
   purple: '#5D5FEF',
+  red: '#F04438',
   white: '#FFFFFF',
   surface: '#1E1F24',
   outside: '#000000',

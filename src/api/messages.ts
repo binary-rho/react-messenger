@@ -35,6 +35,23 @@ export const fetchMyLastMessages = async (): Promise<Message[]> => {
   return (data ?? []) as Message[]
 }
 
+export const getDmRoomKey = (partnerId: string) => `dm:${partnerId}`
+export const getGroupRoomKey = (groupId: string) => `group:${groupId}`
+
+//방별 안 읽은 개수, 키는 room key (supabase/read_state.sql의 함수 필요)
+export const fetchUnreadCounts = async (): Promise<Map<string, number>> => {
+  const { data, error } = await supabase.rpc('my_unread_counts')
+  if (error) throw error
+  const rows = (data ?? []) as { room_key: string; unread_count: number }[]
+  return new Map(rows.map((row) => [row.room_key, Number(row.unread_count)]))
+}
+
+//해당 방을 lastMessageId까지 읽은 것으로 기록
+export const markRoomRead = async (roomKey: string, lastMessageId: number): Promise<void> => {
+  const { error } = await supabase.rpc('mark_room_read', { key: roomKey, read_id: lastMessageId })
+  if (error) throw error
+}
+
 export const sendMessage = async (senderId: string, receiverId: string, content: string): Promise<Message> => {
   const { data, error } = await supabase
     .from('messages')

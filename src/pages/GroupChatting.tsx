@@ -12,7 +12,9 @@ import {
   sendGroupMessage,
   subscribeToGroupMessages,
 } from '../api/groups'
+import { getGroupRoomKey } from '../api/messages'
 import { usePagedMessages } from '../lib/usePagedMessages'
+import { useMarkRoomRead } from '../lib/useMarkRoomRead'
 import { useMyProfile } from '../states/profileAtom'
 import { ChatRoomView } from '../components/ChatRoomView'
 import { GroupMenu } from '../components/GroupMenu'
@@ -32,6 +34,8 @@ export const GroupChatting = () => {
   const { messages, hasMore, loadOlder, appendMessage } = usePagedMessages<GroupMessage>(id, (beforeId) =>
     fetchGroupMessagesPage(id!, beforeId),
   )
+
+  useMarkRoomRead(id && getGroupRoomKey(id), messages)
 
   const loadMembers = (groupId: string) => fetchGroupMembers(groupId).then(setMembers).catch(console.error)
 

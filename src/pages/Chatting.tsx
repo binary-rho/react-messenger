@@ -3,12 +3,14 @@ import { useParams } from 'react-router-dom'
 import { fetchProfileById, Profile } from '../api/profile'
 import {
   fetchConversationPage,
+  getDmRoomKey,
   isMessageOfConversation,
   Message,
   sendMessage,
   subscribeToMyMessages,
 } from '../api/messages'
 import { usePagedMessages } from '../lib/usePagedMessages'
+import { useMarkRoomRead } from '../lib/useMarkRoomRead'
 import { useMyProfile } from '../states/profileAtom'
 import { ChatRoomView } from '../components/ChatRoomView'
 
@@ -19,6 +21,8 @@ export const Chatting = () => {
   const { messages, hasMore, loadOlder, appendMessage } = usePagedMessages<Message>(id, (beforeId) =>
     fetchConversationPage(me.id, id!, beforeId),
   )
+
+  useMarkRoomRead(id && getDmRoomKey(id), messages)
 
   useEffect(() => {
     if (!id) return
