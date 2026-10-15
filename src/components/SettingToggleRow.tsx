@@ -49,6 +49,7 @@ const LabelTitle = styled.span`
   font-size: 1rem;
 `
 const LabelHint = styled.span`
+  margin-top: 2px;
   color: ${colors.grey_400};
   font-family: 'Pretendard-Regular';
   font-size: 0.75rem;

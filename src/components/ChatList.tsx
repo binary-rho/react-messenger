@@ -16,18 +16,14 @@ import { fetchMyLastGroupMessages, fetchMyGroups, Group, GroupMessage, subscribe
 import { useMyProfile } from '../states/profileAtom'
 import { EMOJI_PREVIEW_TEXT, parseEmojiContent } from '../lib/emoji'
 
-const CONTENT_PREVIEW_LENGTH = 14
 const NEW_GROUP_CONTENT = '단톡방이 만들어졌어요.'
 const MAX_UNREAD_DISPLAY = 99
 const UNKNOWN_SENDER_NAME = '알 수 없음'
 
 const formatUnreadCount = (count: number) => (count > MAX_UNREAD_DISPLAY ? `${MAX_UNREAD_DISPLAY}+` : String(count))
 
-//채팅 목록에서 14글자가 넘어가면 ...표시 되도록
-const editContent = (content: string) => {
-  if (parseEmojiContent(content)) return EMOJI_PREVIEW_TEXT
-  return content.length >= CONTENT_PREVIEW_LENGTH ? content.substring(0, CONTENT_PREVIEW_LENGTH) + '...' : content
-}
+//말줄임은 ChatContent의 CSS(text-overflow)가 가로 길이에 맞춰 처리함
+const editContent = (content: string) => (parseEmojiContent(content) ? EMOJI_PREVIEW_TEXT : content)
 
 //1:1 채팅과 단톡을 한 목록에서 보여주기 위한 형태
 interface ChatListItem {
@@ -197,7 +193,8 @@ const ChatBox = styled.div`
 `
 const InfoBox = styled.div`
   display: flex;
-  width: 16.5rem;
+  flex: 1;
+  min-width: 0;
   height: 3.75rem;
   align-items: center;
 `
@@ -216,7 +213,8 @@ const ChatProfileImg = styled.img`
 `
 
 const ChatTextBox = styled.div`
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   height: 2.63rem;
@@ -235,12 +233,17 @@ const ChatContent = styled.div`
   font-size: 0.875rem;
   line-height: 0.875rem;
   margin-top: 0.19rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `
 //이름/미리보기 줄(ChatTextBox)과 같은 높이·세로 위치로 맞춰서 시간은 이름 줄, 뱃지는 미리보기 줄에 오도록 함
 const ChatMeta = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
   height: 2.63rem;
   margin-top: 0.56rem;
 `

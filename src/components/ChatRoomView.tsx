@@ -127,7 +127,6 @@ export const ChatRoomView = ({
           </Link>
           <UserNameBox>
             <UserName>{title}</UserName>
-            {isChatOn && <GreenCircle />}
           </UserNameBox>
           <DotsIcon src={imgPath.path[6]} onClick={onMenuClick} style={{ cursor: onMenuClick ? 'pointer' : 'default' }} />
         </UserContainer>
@@ -285,17 +284,9 @@ const UserName = styled.span`
   color: ${colors.grey_900};
   font-size: 20px;
   font-style: normal;
-  font-weight: 600;
   line-height: 28px;
   margin-left: 11px;
-  font-family: 'Pretendard-Regular';
-`
-
-const GreenCircle = styled.div`
-  width: 8px;
-  height: 8px;
-  border-radius: 100px;
-  background-color: ${colors.green};
+  font-family: 'Pretendard-Medium';
 `
 
 const BackIcon = styled.img`
