@@ -12,6 +12,10 @@ alter table public.chat_reads enable row level security;
 
 create policy "chat_reads read own" on public.chat_reads for select to authenticated
   using (user_id = auth.uid());
+create policy "chat_reads insert own" on public.chat_reads for insert to authenticated
+  with check (user_id = auth.uid());
+create policy "chat_reads update own" on public.chat_reads for update to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 -- 읽음 위치는 앞으로만 이동 (오래된 요청이 늦게 도착해도 되돌아가지 않도록 greatest 사용)
 create or replace function public.mark_room_read(key text, read_id bigint)

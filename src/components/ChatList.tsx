@@ -236,27 +236,29 @@ const ChatContent = styled.div`
   line-height: 0.875rem;
   margin-top: 0.19rem;
 `
+//이름/미리보기 줄(ChatTextBox)과 같은 높이·세로 위치로 맞춰서 시간은 이름 줄, 뱃지는 미리보기 줄에 오도록 함
 const ChatMeta = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.25rem;
+  height: 2.63rem;
   margin-top: 0.56rem;
 `
 const ChatTime = styled.span`
   color: ${colors.grey_400};
   font-family: 'Pretendard-Regular';
   font-size: 0.75rem;
-  line-height: 0.875rem;
+  line-height: 1.575rem;
 `
 const UnreadBadge = styled.span`
-  min-width: 1.25rem;
+  margin-top: 0.19rem;
+  min-width: 1.125rem;
   padding: 0 0.375rem;
-  border-radius: 0.625rem;
+  border-radius: 0.5625rem;
   background-color: ${colors.red};
   color: ${colors.white};
   font-family: 'Pretendard-Medium';
   font-size: 0.75rem;
-  line-height: 1.25rem;
+  line-height: 1.125rem;
   text-align: center;
 `
