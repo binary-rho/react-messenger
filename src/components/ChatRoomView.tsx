@@ -11,6 +11,7 @@ import { parseImageContent, toImageContent } from '../lib/image'
 import { uploadChatImage, validateChatImageFile } from '../api/chatImages'
 import { AttachMenu, AttachMenuItem } from './AttachMenu'
 import { ChatImageMessage } from './ChatImageMessage'
+import { PhotoIcon, SmileIcon } from './icons'
 
 const TIME_FORMAT = 'hh:mma'
 const UNKNOWN_SENDER_NAME = '알 수 없음'
@@ -152,7 +153,7 @@ export const ChatRoomView = ({
   }
 
   const attachMenuItems: AttachMenuItem[] = [
-    { key: 'album', label: '앨범', icon: '🖼️', onSelect: () => imageFileInputRef.current?.click() },
+    { key: 'album', label: '앨범', icon: <PhotoIcon size={28} />, onSelect: () => imageFileInputRef.current?.click() },
   ]
 
   //이모티콘/사진 메시지는 말풍선 없이 이미지로, 일반 메시지는 말풍선으로 표시
@@ -281,7 +282,7 @@ export const ChatRoomView = ({
                 onPaste={onInputPaste}
               />
               <EmojiToggleButton type="button" onClick={() => togglePanel('emoji')} aria-label="이모티콘">
-                😊
+                <SmileIcon size={EMOJI_TOGGLE_ICON_SIZE_PX} />
               </EmojiToggleButton>
             </InputWrapper>
             <button
@@ -575,16 +576,18 @@ const InputWrapper = styled.div`
   min-width: 0;
 `
 
+const EMOJI_TOGGLE_ICON_SIZE_PX = 22
+
 const EmojiToggleButton = styled.button`
   position: absolute;
   top: 50%;
   right: 8px;
+  display: flex;
   transform: translateY(-50%);
   border: none;
   padding: 0;
   background: transparent;
-  font-size: 20px;
-  line-height: 1;
+  color: ${colors.grey_400};
   cursor: pointer;
 `
 

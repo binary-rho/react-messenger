@@ -4,7 +4,7 @@ import { colors } from '../style/colors'
 export interface AttachMenuItem {
   key: string
   label: string
-  icon: string
+  icon: React.ReactNode
   onSelect: () => void
 }
 
@@ -52,7 +52,7 @@ const ItemIcon = styled.span`
   height: ${ITEM_ICON_SIZE_PX}px;
   border-radius: 50%;
   background-color: ${colors.grey_50};
-  font-size: 26px;
+  color: ${colors.grey_700};
 `
 
 const ItemLabel = styled.span`
