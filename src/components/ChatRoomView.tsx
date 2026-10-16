@@ -12,6 +12,8 @@ import { uploadChatImage, validateChatImageFile } from '../api/chatImages'
 import { AttachMenu, AttachMenuItem } from './AttachMenu'
 import { ChatImageMessage } from './ChatImageMessage'
 import { PhotoIcon, SmileIcon } from './icons'
+import { MessageReaction } from '../api/reactions'
+import { MessageReactionChips, MiniEmojiPicker } from './MessageReactions'
 
 const TIME_FORMAT = 'hh:mma'
 const UNKNOWN_SENDER_NAME = '알 수 없음'
@@ -36,6 +38,8 @@ export const ChatRoomView = ({
   onSenderClick,
   onMenuClick,
   overlay,
+  reactions,
+  onToggleReaction,
 }: {
   title: string
   messages: ChatRoomMessage[]
@@ -47,11 +51,15 @@ export const ChatRoomView = ({
   onSenderClick?: (senderId: string) => void
   onMenuClick?: () => void
   overlay?: React.ReactNode
+  reactions: Map<number, MessageReaction[]>
+  onToggleReaction: (messageId: number, emoji: string) => Promise<void>
 }) => {
   const [inputValue, setInputValue] = useState<string>('')
   //첨부 메뉴와 이모티콘 피커는 같은 자리를 쓰므로 한 번에 하나만 열린다
   const [openPanel, setOpenPanel] = useState<'attach' | 'emoji' | null>(null)
   const [isUploading, setIsUploading] = useState<boolean>(false)
+  //미니 이모티콘 선택 줄이 열려 있는 메시지 (한 번에 하나만)
+  const [reactionPickerMessageId, setReactionPickerMessageId] = useState<number | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const imageFileInputRef = useRef<HTMLInputElement>(null)
   const chatListRef = useRef<HTMLDivElement>(null)
@@ -119,6 +127,16 @@ export const ChatRoomView = ({
     }
   }
 
+  const onReactionSelect = async (messageId: number, emoji: string) => {
+    setReactionPickerMessageId(null)
+    try {
+      await onToggleReaction(messageId, emoji)
+    } catch (error) {
+      console.error(error)
+      alert('이모티콘을 달지 못했어요. 다시 시도해주세요.')
+    }
+  }
+
   const sendImageFile = async (file: File) => {
     const invalidReason = validateChatImageFile(file)
     if (invalidReason) {
@@ -165,6 +183,24 @@ export const ChatRoomView = ({
     return <Bubble>{content}</Bubble>
   }
 
+  //메시지를 누르면 미니 이모티콘 선택 줄이 열리고, 달린 이모티콘은 메시지 아래에 칩으로 표시
+  const renderMessageBody = (chat: ChatRoomMessage, Bubble: typeof ChattingBox1, isMine: boolean) => (
+    <>
+      <ReactionTarget
+        $isMine={isMine}
+        onClick={() => setReactionPickerMessageId((current) => (current === chat.id ? null : chat.id))}
+      >
+        {renderContent(chat.content, Bubble)}
+      </ReactionTarget>
+      {reactionPickerMessageId === chat.id && <MiniEmojiPicker onSelect={(emoji) => onReactionSelect(chat.id, emoji)} />}
+      <MessageReactionChips
+        reactions={reactions.get(chat.id) ?? []}
+        myId={myId}
+        onToggle={(emoji) => onReactionSelect(chat.id, emoji)}
+      />
+    </>
+  )
+
   const isChatOn = messages.length > 0
 
   return (
@@ -209,7 +245,7 @@ export const ChatRoomView = ({
                 {chat.sender_id === myId ? (
                   <MyChatList>
                     <MyChatContainer>
-                      {renderContent(chat.content, ChattingBox1)}
+                      {renderMessageBody(chat, ChattingBox1, true)}
                     </MyChatContainer>
                     {showTime ? <ChatTime>{timeText}</ChatTime> : null}
                   </MyChatList>
@@ -227,7 +263,7 @@ export const ChatRoomView = ({
                     <FriendChatList>
                       <FriendChatContainer>
                         {showProfile ? <FriendName>{sender?.name ?? UNKNOWN_SENDER_NAME}</FriendName> : null}
-                        {renderContent(chat.content, ChattingBox2)}
+                        {renderMessageBody(chat, ChattingBox2, false)}
                       </FriendChatContainer>
                       {showTime ? <ChatTime>{timeText}</ChatTime> : null}
                     </FriendChatList>
@@ -447,6 +483,14 @@ const ChattingBox2 = styled.span`
   font-family: 'Pretendard-Light';
   margin-bottom: 0.5rem;
   word-break: break-all;
+`
+
+const ReactionTarget = styled.div<{ $isMine: boolean }>`
+  display: flex;
+  flex-direction: column;
+  width: fit-content;
+  align-self: ${({ $isMine }) => ($isMine ? 'flex-end' : 'flex-start')};
+  cursor: pointer;
 `
 
 const EMOJI_MESSAGE_SIZE_PX = 100

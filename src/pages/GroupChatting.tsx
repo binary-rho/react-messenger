@@ -15,6 +15,7 @@ import {
 import { getGroupRoomKey } from '../api/messages'
 import { usePagedMessages } from '../lib/usePagedMessages'
 import { useMarkRoomRead } from '../lib/useMarkRoomRead'
+import { useMessageReactions } from '../lib/useMessageReactions'
 import { useMyProfile } from '../states/profileAtom'
 import { ChatRoomView } from '../components/ChatRoomView'
 import { GroupMenu } from '../components/GroupMenu'
@@ -36,6 +37,7 @@ export const GroupChatting = () => {
   )
 
   useMarkRoomRead(id && getGroupRoomKey(id), messages)
+  const { reactionsByMessageId, toggleReaction } = useMessageReactions('group', id, messages, me.id)
 
   const loadMembers = (groupId: string) => fetchGroupMembers(groupId).then(setMembers).catch(console.error)
 
@@ -103,6 +105,8 @@ export const GroupChatting = () => {
       onSend={onSend}
       hasMore={hasMore}
       onLoadOlder={loadOlder}
+      reactions={reactionsByMessageId}
+      onToggleReaction={toggleReaction}
       onSenderClick={setSelectedSenderId}
       onMenuClick={() => setIsMenuOpen(true)}
       overlay={

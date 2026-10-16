@@ -11,6 +11,7 @@ import {
 } from '../api/messages'
 import { usePagedMessages } from '../lib/usePagedMessages'
 import { useMarkRoomRead } from '../lib/useMarkRoomRead'
+import { useMessageReactions } from '../lib/useMessageReactions'
 import { useMyProfile } from '../states/profileAtom'
 import { ChatRoomView } from '../components/ChatRoomView'
 
@@ -23,6 +24,7 @@ export const Chatting = () => {
   )
 
   useMarkRoomRead(id && getDmRoomKey(id), messages)
+  const { reactionsByMessageId, toggleReaction } = useMessageReactions('dm', id, messages, me.id)
 
   useEffect(() => {
     if (!id) return
@@ -52,6 +54,8 @@ export const Chatting = () => {
       onSend={onSend}
       hasMore={hasMore}
       onLoadOlder={loadOlder}
+      reactions={reactionsByMessageId}
+      onToggleReaction={toggleReaction}
     />
   )
 }
