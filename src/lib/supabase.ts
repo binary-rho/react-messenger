@@ -10,3 +10,4 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export const AVATAR_BUCKET = 'avatars'
+export const CHAT_IMAGE_BUCKET = 'chat-images'

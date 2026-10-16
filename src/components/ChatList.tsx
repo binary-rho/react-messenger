@@ -14,7 +14,7 @@ import {
 } from '../api/messages'
 import { fetchMyLastGroupMessages, fetchMyGroups, Group, GroupMessage, subscribeToGroupMessages } from '../api/groups'
 import { useMyProfile } from '../states/profileAtom'
-import { EMOJI_PREVIEW_TEXT, parseEmojiContent } from '../lib/emoji'
+import { toPreviewText } from '../lib/messagePreview'
 
 const NEW_GROUP_CONTENT = '단톡방이 만들어졌어요.'
 const MAX_UNREAD_DISPLAY = 99
@@ -23,7 +23,7 @@ const UNKNOWN_SENDER_NAME = '알 수 없음'
 const formatUnreadCount = (count: number) => (count > MAX_UNREAD_DISPLAY ? `${MAX_UNREAD_DISPLAY}+` : String(count))
 
 //말줄임은 ChatContent의 CSS(text-overflow)가 가로 길이에 맞춰 처리함
-const editContent = (content: string) => (parseEmojiContent(content) ? EMOJI_PREVIEW_TEXT : content)
+const editContent = toPreviewText
 
 //1:1 채팅과 단톡을 한 목록에서 보여주기 위한 형태
 interface ChatListItem {

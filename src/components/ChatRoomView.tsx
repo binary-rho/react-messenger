@@ -7,6 +7,10 @@ import { format } from 'date-fns'
 import { appFrame } from '../style/layout'
 import { Profile, resolveAvatarSrc } from '../api/profile'
 import { EMOJI_FILES, parseEmojiContent, resolveEmojiSrc, toEmojiContent } from '../lib/emoji'
+import { parseImageContent, toImageContent } from '../lib/image'
+import { uploadChatImage, validateChatImageFile } from '../api/chatImages'
+import { AttachMenu, AttachMenuItem } from './AttachMenu'
+import { ChatImageMessage } from './ChatImageMessage'
 
 const TIME_FORMAT = 'hh:mma'
 const UNKNOWN_SENDER_NAME = '알 수 없음'
@@ -44,8 +48,11 @@ export const ChatRoomView = ({
   overlay?: React.ReactNode
 }) => {
   const [inputValue, setInputValue] = useState<string>('')
-  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState<boolean>(false)
+  //첨부 메뉴와 이모티콘 피커는 같은 자리를 쓰므로 한 번에 하나만 열린다
+  const [openPanel, setOpenPanel] = useState<'attach' | 'emoji' | null>(null)
+  const [isUploading, setIsUploading] = useState<boolean>(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const imageFileInputRef = useRef<HTMLInputElement>(null)
   const chatListRef = useRef<HTMLDivElement>(null)
 
   const prevScrollHeightRef = useRef<number>(0)
@@ -99,8 +106,10 @@ export const ChatRoomView = ({
     }
   }
 
+  const togglePanel = (panel: 'attach' | 'emoji') => setOpenPanel((current) => (current === panel ? null : panel))
+
   const onEmojiSelect = async (fileName: string) => {
-    setIsEmojiPickerOpen(false)
+    setOpenPanel(null)
     try {
       await onSend(toEmojiContent(fileName))
     } catch (error) {
@@ -109,10 +118,49 @@ export const ChatRoomView = ({
     }
   }
 
-  //이모티콘 메시지는 말풍선 없이 이미지로, 일반 메시지는 말풍선으로 표시
+  const sendImageFile = async (file: File) => {
+    const invalidReason = validateChatImageFile(file)
+    if (invalidReason) {
+      alert(invalidReason)
+      return
+    }
+    setOpenPanel(null)
+    setIsUploading(true)
+    try {
+      await onSend(toImageContent(await uploadChatImage(myId, file)))
+    } catch (error) {
+      console.error(error)
+      alert('사진을 보내지 못했어요. 다시 시도해주세요.')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const onImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    //같은 사진을 다시 골라도 change 이벤트가 오도록 초기화
+    e.target.value = ''
+    if (file) sendImageFile(file)
+  }
+
+  //클립보드에 이미지가 있으면 바로 전송 (텍스트만 있으면 기본 붙여넣기 동작 유지)
+  const onInputPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const imageFile = Array.from(e.clipboardData.files).find((file) => file.type.startsWith('image/'))
+    if (!imageFile) return
+    e.preventDefault()
+    sendImageFile(imageFile)
+  }
+
+  const attachMenuItems: AttachMenuItem[] = [
+    { key: 'album', label: '앨범', icon: '🖼️', onSelect: () => imageFileInputRef.current?.click() },
+  ]
+
+  //이모티콘/사진 메시지는 말풍선 없이 이미지로, 일반 메시지는 말풍선으로 표시
   const renderContent = (content: string, Bubble: typeof ChattingBox1) => {
     const emojiFileName = parseEmojiContent(content)
     if (emojiFileName) return <EmojiMessageImg src={resolveEmojiSrc(emojiFileName)} alt="이모티콘" />
+    const imagePath = parseImageContent(content)
+    if (imagePath) return <ChatImageMessage path={imagePath} />
     return <Bubble>{content}</Bubble>
   }
 
@@ -194,7 +242,8 @@ export const ChatRoomView = ({
           <NoChatText>작성된 메시지가 없습니다.</NoChatText>
         </NoChattingList>
       )}
-      {isEmojiPickerOpen && (
+      {openPanel === 'attach' && <AttachMenu items={attachMenuItems} />}
+      {openPanel === 'emoji' && (
         <EmojiPicker>
           {EMOJI_FILES.length === 0 ? (
             <EmojiEmptyText>등록된 이모티콘이 없어요.</EmojiEmptyText>
@@ -210,14 +259,31 @@ export const ChatRoomView = ({
       <BottomBox>
         <ChatArea>
           <InputContainer onSubmit={onSubmit}>
-            <PlusIcon src={imgPath.path[4]} onClick={() => setIsEmojiPickerOpen((isOpen) => !isOpen)} />
-            <InputBox
-              placeholder="메시지를 작성해주세요"
-              ref={inputRef}
-              value={inputValue}
-              onChange={onChange}
-              onClick={handleInputClick}
+            <PlusIcon
+              src={imgPath.path[4]}
+              onClick={() => togglePanel('attach')}
+              style={{ transform: openPanel === 'attach' ? 'rotate(45deg)' : 'none' }}
             />
+            <input
+              ref={imageFileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={onImageFileChange}
+              style={{ display: 'none' }}
+            />
+            <InputWrapper>
+              <InputBox
+                placeholder={isUploading ? '사진을 보내는 중...' : '메시지를 작성해주세요'}
+                ref={inputRef}
+                value={inputValue}
+                onChange={onChange}
+                onClick={handleInputClick}
+                onPaste={onInputPaste}
+              />
+              <EmojiToggleButton type="button" onClick={() => togglePanel('emoji')} aria-label="이모티콘">
+                😊
+              </EmojiToggleButton>
+            </InputWrapper>
             <button
               type="submit"
               style={{
@@ -498,6 +564,28 @@ const PlusIcon = styled.img`
   height: 28px;
   width: 28px;
   cursor: pointer;
+  transition: transform 0.15s;
+`
+
+//이모티콘 버튼을 입력창 안쪽 오른쪽 끝에 겹쳐 놓기 위한 래퍼
+const InputWrapper = styled.div`
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+`
+
+const EmojiToggleButton = styled.button`
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  border: none;
+  padding: 0;
+  background: transparent;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
 `
 
 const InputBox = styled.input`
@@ -506,7 +594,7 @@ const InputBox = styled.input`
   outline: none;
   border: none;
   border-radius: 6px;
-  padding: 9px 0px 8px 14px;
+  padding: 9px 36px 8px 14px;
   font-size: 16px;
   font-family: 'Pretendard-Regular';
 

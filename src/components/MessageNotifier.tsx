@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { fetchGroupById, subscribeToGroupMessages } from '../api/groups'
 import { subscribeToMyMessages } from '../api/messages'
 import { fetchProfilesByIds } from '../api/profile'
+import { toPreviewText } from '../lib/messagePreview'
 import { showNotification } from '../lib/notification'
 import { useMyProfile } from '../states/profileAtom'
 
@@ -21,7 +22,11 @@ export const MessageNotifier = () => {
       if (message.sender_id === me.id || document.hasFocus()) return
       const [sender] = await fetchProfilesByIds([message.sender_id])
       showNotification(
-        { title: sender?.name ?? '새 메시지', body: message.content, path: `/chatting/${message.sender_id}` },
+        {
+          title: sender?.name ?? '새 메시지',
+          body: toPreviewText(message.content),
+          path: `/chatting/${message.sender_id}`,
+        },
         navigate,
       )
     })
@@ -32,7 +37,7 @@ export const MessageNotifier = () => {
       showNotification(
         {
           title: group?.name ?? '단톡방',
-          body: `${sender?.name ?? ''}: ${message.content}`,
+          body: `${sender?.name ?? ''}: ${toPreviewText(message.content)}`,
           path: `/group/${message.group_id}`,
         },
         navigate,
