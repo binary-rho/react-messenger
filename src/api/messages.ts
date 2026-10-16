@@ -52,6 +52,12 @@ export const markRoomRead = async (roomKey: string, lastMessageId: number): Prom
   if (error) throw error
 }
 
+export const fetchMessageById = async (messageId: number): Promise<Message | null> => {
+  const { data, error } = await supabase.from('messages').select('*').eq('id', messageId).maybeSingle()
+  if (error) throw error
+  return data
+}
+
 export const sendMessage = async (senderId: string, receiverId: string, content: string): Promise<Message> => {
   const { data, error } = await supabase
     .from('messages')

@@ -85,6 +85,12 @@ export const fetchMyLastGroupMessages = async (): Promise<GroupMessage[]> => {
   return (data ?? []) as GroupMessage[]
 }
 
+export const fetchGroupMessageById = async (messageId: number): Promise<GroupMessage | null> => {
+  const { data, error } = await supabase.from('group_messages').select('*').eq('id', messageId).maybeSingle()
+  if (error) throw error
+  return data
+}
+
 export const sendGroupMessage = async (groupId: string, senderId: string, content: string): Promise<GroupMessage> => {
   const { data, error } = await supabase
     .from('group_messages')
