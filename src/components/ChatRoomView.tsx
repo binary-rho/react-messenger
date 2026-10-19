@@ -14,7 +14,8 @@ import { ChatImageMessage } from './ChatImageMessage'
 import { PhotoIcon, SmileIcon } from './icons'
 import { MessageReaction } from '../api/reactions'
 import { MessageReactionChips, MiniEmojiPicker } from './MessageReactions'
-import { ReplyButton, ReplyComposerBar, ReplyQuote, ReplyTarget } from './ReplyQuote'
+import { ReplyComposerBar, ReplyQuote, ReplyTarget } from './ReplyQuote'
+import { MessageActionToolbar, Toolbar as MessageToolbar } from './MessageActionToolbar'
 
 const TIME_FORMAT = 'hh:mma'
 const UNKNOWN_SENDER_NAME = '알 수 없음'
@@ -217,24 +218,21 @@ export const ChatRoomView = ({
     return original ? toReplyTarget(original) : null
   }
 
-  //메시지를 누르면 미니 이모티콘 선택 줄이 열리고, 달린 이모티콘은 메시지 아래에 칩으로 표시
+  //메시지에 마우스를 올리면 [이모티콘 | 답장] 버튼이 뜨고, 달린 이모티콘은 메시지 아래에 칩으로 표시
   const renderMessageBody = (chat: ChatRoomMessage, Bubble: typeof ChattingBox1, isMine: boolean) => (
     <>
       {chat.reply_to_id !== null && chat.reply_to_id !== undefined && (
         <ReplyQuote target={getReplyTarget(chat.reply_to_id)} />
       )}
-      <ReactionTarget
-        $isMine={isMine}
-        onClick={() => setReactionPickerMessageId((current) => (current === chat.id ? null : chat.id))}
-      >
+      <ReactionTarget $isMine={isMine}>
+        <MessageActionToolbar
+          isMine={isMine}
+          onReactionClick={() => setReactionPickerMessageId((current) => (current === chat.id ? null : chat.id))}
+          onReplyClick={() => onReplySelect(chat)}
+        />
         {renderContent(chat.content, Bubble)}
       </ReactionTarget>
-      {reactionPickerMessageId === chat.id && (
-        <>
-          <MiniEmojiPicker onSelect={(emoji) => onReactionSelect(chat.id, emoji)} />
-          <ReplyButton onClick={() => onReplySelect(chat)} />
-        </>
-      )}
+      {reactionPickerMessageId === chat.id && <MiniEmojiPicker onSelect={(emoji) => onReactionSelect(chat.id, emoji)} />}
       <MessageReactionChips
         reactions={reactions.get(chat.id) ?? []}
         myId={myId}
@@ -529,11 +527,15 @@ const ChattingBox2 = styled.span`
 `
 
 const ReactionTarget = styled.div<{ $isMine: boolean }>`
+  position: relative;
   display: flex;
   flex-direction: column;
   width: fit-content;
   align-self: ${({ $isMine }) => ($isMine ? 'flex-end' : 'flex-start')};
-  cursor: pointer;
+
+  &:hover ${MessageToolbar}, &:focus-within ${MessageToolbar} {
+    display: flex;
+  }
 `
 
 const EMOJI_MESSAGE_SIZE_PX = 100

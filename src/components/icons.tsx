@@ -32,3 +32,20 @@ export const SmileIcon = ({ size = 24 }: { size?: number }) => (
     <path d="M9 9.5h.01M15 9.5h.01" />
   </LineIcon>
 )
+
+export const SmilePlusIcon = ({ size = 24 }: { size?: number }) => (
+  <LineIcon size={size}>
+    <path d="M22 11v1a10 10 0 1 1-9-10" />
+    <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+    <path d="M9 9h.01M15 9h.01" />
+    <path d="M16 5h6M19 2v6" />
+  </LineIcon>
+)
+
+//ㄴ> 모양의 답장 아이콘
+export const ReplyIcon = ({ size = 24 }: { size?: number }) => (
+  <LineIcon size={size}>
+    <path d="M5 4v9a2 2 0 0 0 2 2h12" />
+    <path d="M15 11l4 4-4 4" />
+  </LineIcon>
+)

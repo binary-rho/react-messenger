@@ -40,12 +40,6 @@ export const ReplyComposerBar = ({ target, onCancel }: { target: ReplyTarget; on
   </ComposerBar>
 )
 
-export const ReplyButton = ({ onClick }: { onClick: () => void }) => (
-  <ReplyActionButton type="button" onClick={onClick}>
-    답장
-  </ReplyActionButton>
-)
-
 const QuoteBox = styled.div`
   display: flex;
   flex-direction: column;
@@ -112,18 +106,5 @@ const CancelButton = styled.button`
   background: transparent;
   color: ${colors.grey_400};
   font-size: 14px;
-  cursor: pointer;
-`
-
-const ReplyActionButton = styled.button`
-  align-self: flex-start;
-  margin-bottom: 0.5rem;
-  padding: 4px 10px;
-  border: 1px solid ${colors.grey_100};
-  border-radius: 12px;
-  background-color: ${colors.surface};
-  color: ${colors.grey_700};
-  font-family: 'Pretendard-Regular';
-  font-size: 12px;
   cursor: pointer;
 `
