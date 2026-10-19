@@ -40,9 +40,9 @@ export const Chatting = () => {
     return map
   }, [me, opposite])
 
-  const onSend = async (content: string) => {
+  const onSend = async (content: string, replyToId?: number) => {
     if (!opposite) return
-    appendMessage(await sendMessage(me.id, opposite.id, content))
+    appendMessage(await sendMessage(me.id, opposite.id, content, replyToId))
   }
 
   return (

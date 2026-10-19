@@ -5,6 +5,7 @@ export interface Message {
   sender_id: string
   receiver_id: string
   content: string
+  reply_to_id: number | null
   created_at: string
 }
 
@@ -58,10 +59,15 @@ export const fetchMessageById = async (messageId: number): Promise<Message | nul
   return data
 }
 
-export const sendMessage = async (senderId: string, receiverId: string, content: string): Promise<Message> => {
+export const sendMessage = async (
+  senderId: string,
+  receiverId: string,
+  content: string,
+  replyToId?: number,
+): Promise<Message> => {
   const { data, error } = await supabase
     .from('messages')
-    .insert({ sender_id: senderId, receiver_id: receiverId, content })
+    .insert({ sender_id: senderId, receiver_id: receiverId, content, reply_to_id: replyToId ?? null })
     .select()
     .single()
   if (error) throw error

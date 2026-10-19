@@ -67,9 +67,9 @@ export const GroupChatting = () => {
     [members, formerSenders],
   )
 
-  const onSend = async (content: string) => {
+  const onSend = async (content: string, replyToId?: number) => {
     if (!id) return
-    appendMessage(await sendGroupMessage(id, me.id, content))
+    appendMessage(await sendGroupMessage(id, me.id, content, replyToId))
   }
 
   const onInvite = async (friendIds: string[]) => {

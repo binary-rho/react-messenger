@@ -14,6 +14,7 @@ export interface GroupMessage {
   group_id: string
   sender_id: string
   content: string
+  reply_to_id: number | null
   created_at: string
 }
 
@@ -91,10 +92,15 @@ export const fetchGroupMessageById = async (messageId: number): Promise<GroupMes
   return data
 }
 
-export const sendGroupMessage = async (groupId: string, senderId: string, content: string): Promise<GroupMessage> => {
+export const sendGroupMessage = async (
+  groupId: string,
+  senderId: string,
+  content: string,
+  replyToId?: number,
+): Promise<GroupMessage> => {
   const { data, error } = await supabase
     .from('group_messages')
-    .insert({ group_id: groupId, sender_id: senderId, content })
+    .insert({ group_id: groupId, sender_id: senderId, content, reply_to_id: replyToId ?? null })
     .select()
     .single()
   if (error) throw error

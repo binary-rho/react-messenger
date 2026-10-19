@@ -14,6 +14,7 @@ import { ChatImageMessage } from './ChatImageMessage'
 import { PhotoIcon, SmileIcon } from './icons'
 import { MessageReaction } from '../api/reactions'
 import { MessageReactionChips, MiniEmojiPicker } from './MessageReactions'
+import { ReplyButton, ReplyComposerBar, ReplyQuote, ReplyTarget } from './ReplyQuote'
 
 const TIME_FORMAT = 'hh:mma'
 const UNKNOWN_SENDER_NAME = '알 수 없음'
@@ -23,6 +24,7 @@ export interface ChatRoomMessage {
   id: number
   sender_id: string
   content: string
+  reply_to_id: number | null
   created_at: string
 }
 
@@ -45,7 +47,7 @@ export const ChatRoomView = ({
   messages: ChatRoomMessage[]
   senders: Map<string, Profile>
   myId: string
-  onSend: (content: string) => Promise<void>
+  onSend: (content: string, replyToId?: number) => Promise<void>
   hasMore: boolean
   onLoadOlder: () => Promise<void>
   onSenderClick?: (senderId: string) => void
@@ -60,6 +62,8 @@ export const ChatRoomView = ({
   const [isUploading, setIsUploading] = useState<boolean>(false)
   //미니 이모티콘 선택 줄이 열려 있는 메시지 (한 번에 하나만)
   const [reactionPickerMessageId, setReactionPickerMessageId] = useState<number | null>(null)
+  //답장 중인 메시지 (다음에 보내는 메시지 한 건에 붙고 전송하면 해제)
+  const [replyingTo, setReplyingTo] = useState<ChatRoomMessage | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const imageFileInputRef = useRef<HTMLInputElement>(null)
   const chatListRef = useRef<HTMLDivElement>(null)
@@ -107,7 +111,7 @@ export const ChatRoomView = ({
     const content = inputValue
     setInputValue('')
     try {
-      await onSend(content)
+      await sendWithReply(content)
     } catch (error) {
       console.error(error)
       setInputValue(content)
@@ -115,12 +119,36 @@ export const ChatRoomView = ({
     }
   }
 
+  const toReplyTarget = (message: ChatRoomMessage): ReplyTarget => ({
+    senderName: senders.get(message.sender_id)?.name ?? UNKNOWN_SENDER_NAME,
+    content: message.content,
+    createdAt: message.created_at,
+  })
+
+  //답장 중이면 그 메시지에 대한 답장으로 보내고 답장 상태를 해제
+  const sendWithReply = async (content: string) => {
+    const replyToId = replyingTo?.id
+    setReplyingTo(null)
+    try {
+      await onSend(content, replyToId)
+    } catch (error) {
+      setReplyingTo(replyingTo)
+      throw error
+    }
+  }
+
+  const onReplySelect = (message: ChatRoomMessage) => {
+    setReactionPickerMessageId(null)
+    setReplyingTo(message)
+    inputRef.current?.focus()
+  }
+
   const togglePanel = (panel: 'attach' | 'emoji') => setOpenPanel((current) => (current === panel ? null : panel))
 
   const onEmojiSelect = async (fileName: string) => {
     setOpenPanel(null)
     try {
-      await onSend(toEmojiContent(fileName))
+      await sendWithReply(toEmojiContent(fileName))
     } catch (error) {
       console.error(error)
       alert('이모티콘을 보내지 못했어요. 다시 시도해주세요.')
@@ -146,7 +174,7 @@ export const ChatRoomView = ({
     setOpenPanel(null)
     setIsUploading(true)
     try {
-      await onSend(toImageContent(await uploadChatImage(myId, file)))
+      await sendWithReply(toImageContent(await uploadChatImage(myId, file)))
     } catch (error) {
       console.error(error)
       alert('사진을 보내지 못했어요. 다시 시도해주세요.')
@@ -183,16 +211,30 @@ export const ChatRoomView = ({
     return <Bubble>{content}</Bubble>
   }
 
+  //불러온 메시지 중에서 답장 원본을 찾음 (더 이전 페이지에 있어 아직 없으면 null)
+  const getReplyTarget = (replyToId: number): ReplyTarget | null => {
+    const original = messages.find((message) => message.id === replyToId)
+    return original ? toReplyTarget(original) : null
+  }
+
   //메시지를 누르면 미니 이모티콘 선택 줄이 열리고, 달린 이모티콘은 메시지 아래에 칩으로 표시
   const renderMessageBody = (chat: ChatRoomMessage, Bubble: typeof ChattingBox1, isMine: boolean) => (
     <>
+      {chat.reply_to_id !== null && chat.reply_to_id !== undefined && (
+        <ReplyQuote target={getReplyTarget(chat.reply_to_id)} />
+      )}
       <ReactionTarget
         $isMine={isMine}
         onClick={() => setReactionPickerMessageId((current) => (current === chat.id ? null : chat.id))}
       >
         {renderContent(chat.content, Bubble)}
       </ReactionTarget>
-      {reactionPickerMessageId === chat.id && <MiniEmojiPicker onSelect={(emoji) => onReactionSelect(chat.id, emoji)} />}
+      {reactionPickerMessageId === chat.id && (
+        <>
+          <MiniEmojiPicker onSelect={(emoji) => onReactionSelect(chat.id, emoji)} />
+          <ReplyButton onClick={() => onReplySelect(chat)} />
+        </>
+      )}
       <MessageReactionChips
         reactions={reactions.get(chat.id) ?? []}
         myId={myId}
@@ -279,6 +321,7 @@ export const ChatRoomView = ({
           <NoChatText>작성된 메시지가 없습니다.</NoChatText>
         </NoChattingList>
       )}
+      {replyingTo && <ReplyComposerBar target={toReplyTarget(replyingTo)} onCancel={() => setReplyingTo(null)} />}
       {openPanel === 'attach' && <AttachMenu items={attachMenuItems} />}
       {openPanel === 'emoji' && (
         <EmojiPicker>
