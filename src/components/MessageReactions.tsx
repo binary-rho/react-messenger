@@ -2,36 +2,51 @@ import { useMemo } from 'react'
 import styled from 'styled-components'
 import { colors } from '../style/colors'
 import { MessageReaction } from '../api/reactions'
+import { Profile } from '../api/profile'
 import { isRegisteredMiniEmoji, MINI_EMOJI_FILES, resolveMiniEmojiSrc } from '../lib/miniEmoji'
 
 const CHIP_ICON_SIZE_PX = 20
 const PICKER_ICON_SIZE_PX = 36
+const MY_NAME_LABEL = '나'
+const UNKNOWN_USER_NAME = '알 수 없음'
+const NAME_SEPARATOR = ', '
 
 interface ReactionGroup {
   emoji: string
   count: number
   isMine: boolean
+  userIds: string[]
 }
 
 const groupReactions = (reactions: MessageReaction[], myId: string): ReactionGroup[] => {
   const groups = new Map<string, ReactionGroup>()
   reactions.filter((reaction) => isRegisteredMiniEmoji(reaction.emoji)).forEach((reaction) => {
-    const group = groups.get(reaction.emoji) ?? { emoji: reaction.emoji, count: 0, isMine: false }
+    const group = groups.get(reaction.emoji) ?? { emoji: reaction.emoji, count: 0, isMine: false, userIds: [] }
     group.count += 1
+    group.userIds.push(reaction.user_id)
     group.isMine = group.isMine || reaction.user_id === myId
     groups.set(reaction.emoji, group)
   })
   return Array.from(groups.values())
 }
 
-//메시지 아래에 붙는 리액션 칩 목록 (내가 단 것은 강조, 누르면 취소/추가)
+//이모티콘을 단 사람 이름 목록 (나는 맨 앞에 '나'로 표시)
+const toReactorNames = (group: ReactionGroup, myId: string, senders: Map<string, Profile>): string =>
+  [...group.userIds]
+    .sort((a, b) => Number(b === myId) - Number(a === myId))
+    .map((userId) => (userId === myId ? MY_NAME_LABEL : (senders.get(userId)?.name ?? UNKNOWN_USER_NAME)))
+    .join(NAME_SEPARATOR)
+
+//메시지 아래에 붙는 리액션 칩 목록 (내가 단 것은 강조, 누르면 취소/추가, 올려두면 단 사람 이름 표시)
 export const MessageReactionChips = ({
   reactions,
   myId,
+  senders,
   onToggle,
 }: {
   reactions: MessageReaction[]
   myId: string
+  senders: Map<string, Profile>
   onToggle: (emoji: string) => void
 }) => {
   const groups = useMemo(() => groupReactions(reactions, myId), [reactions, myId])
@@ -39,7 +54,13 @@ export const MessageReactionChips = ({
   return (
     <ChipRow>
       {groups.map((group) => (
-        <Chip key={group.emoji} type="button" $isMine={group.isMine} onClick={() => onToggle(group.emoji)}>
+        <Chip
+          key={group.emoji}
+          type="button"
+          $isMine={group.isMine}
+          title={toReactorNames(group, myId, senders)}
+          onClick={() => onToggle(group.emoji)}
+        >
           <ChipImg src={resolveMiniEmojiSrc(group.emoji)} alt={group.emoji} />
           <ChipCount>{group.count}</ChipCount>
         </Chip>

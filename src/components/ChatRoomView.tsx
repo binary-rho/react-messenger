@@ -235,6 +235,7 @@ export const ChatRoomView = ({
       <MessageReactionChips
         reactions={reactions.get(chat.id) ?? []}
         myId={myId}
+        senders={senders}
         onToggle={(emoji) => onReactionSelect(chat.id, emoji)}
       />
     </>
