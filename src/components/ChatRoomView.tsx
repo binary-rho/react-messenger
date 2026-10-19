@@ -226,7 +226,6 @@ export const ChatRoomView = ({
       )}
       <ReactionTarget $isMine={isMine}>
         <MessageActionToolbar
-          isMine={isMine}
           onReactionClick={() => setReactionPickerMessageId((current) => (current === chat.id ? null : chat.id))}
           onReplyClick={() => onReplySelect(chat)}
         />

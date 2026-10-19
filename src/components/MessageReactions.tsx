@@ -4,8 +4,8 @@ import { colors } from '../style/colors'
 import { MessageReaction } from '../api/reactions'
 import { isRegisteredMiniEmoji, MINI_EMOJI_FILES, resolveMiniEmojiSrc } from '../lib/miniEmoji'
 
-const CHIP_ICON_SIZE_PX = 16
-const PICKER_ICON_SIZE_PX = 24
+const CHIP_ICON_SIZE_PX = 24
+const PICKER_ICON_SIZE_PX = 36
 
 interface ReactionGroup {
   emoji: string
