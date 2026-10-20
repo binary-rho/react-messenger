@@ -271,9 +271,12 @@ export const ChatRoomView = ({
     const mentionNames = Array.from(senders.values()).map((profile) => profile.name)
     return (
       <Bubble>
-        {splitMentions(content, mentionNames).map((segment, index) =>
-          segment.isMention ? <MentionText key={index}>{segment.text}</MentionText> : segment.text,
-        )}
+        {/* Bubble이 flex라 조각마다 칸이 나뉘므로 한 요소로 감싼다 */}
+        <span>
+          {splitMentions(content, mentionNames).map((segment, index) =>
+            segment.isMention ? <MentionText key={index}>{segment.text}</MentionText> : segment.text,
+          )}
+        </span>
       </Bubble>
     )
   }
