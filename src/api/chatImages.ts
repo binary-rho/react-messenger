@@ -6,6 +6,13 @@ const MAX_IMAGE_DIMENSION_PX = 1280
 const RESIZED_IMAGE_TYPE = 'image/jpeg'
 const RESIZED_IMAGE_QUALITY = 0.85
 const GIF_TYPE = 'image/gif'
+const WEBP_TYPE = 'image/webp'
+const PNG_TYPE = 'image/png'
+const EXTENSION_BY_TYPE: Record<string, string> = {
+  [GIF_TYPE]: 'gif',
+  [WEBP_TYPE]: 'webp',
+  [PNG_TYPE]: 'png',
+}
 
 const SIGNED_URL_TTL_SECONDS = 24 * 60 * 60
 //만료 직전에 쓰다 깨지지 않도록 여유를 두고 캐시를 무효로 본다
@@ -17,9 +24,17 @@ export const validateChatImageFile = (file: File): string | null => {
   return null
 }
 
-//긴 변이 MAX_IMAGE_DIMENSION_PX를 넘으면 줄여서 JPEG로 변환 (GIF는 움직임이 사라지므로 원본 유지)
+//움직이는 WebP(ANIM 청크)/APNG(acTL 청크)인지 앞부분 바이트로 확인
+const SNIFF_BYTES = 4096
+const isAnimatedWebpOrPng = async (file: File): Promise<boolean> => {
+  if (file.type !== WEBP_TYPE && file.type !== PNG_TYPE) return false
+  const head = new TextDecoder('latin1').decode(await file.slice(0, SNIFF_BYTES).arrayBuffer())
+  return head.includes('ANIM') || head.includes('acTL')
+}
+
+//긴 변이 MAX_IMAGE_DIMENSION_PX를 넘으면 줄여서 JPEG로 변환 (GIF와 움직이는 WebP/APNG는 움직임이 사라지므로 원본 유지)
 const resizeImage = async (file: File): Promise<Blob> => {
-  if (file.type === GIF_TYPE) return file
+  if (file.type === GIF_TYPE || (await isAnimatedWebpOrPng(file))) return file
   const bitmap = await createImageBitmap(file)
   const scale = Math.min(1, MAX_IMAGE_DIMENSION_PX / Math.max(bitmap.width, bitmap.height))
   const canvas = document.createElement('canvas')
@@ -36,7 +51,7 @@ const resizeImage = async (file: File): Promise<Blob> => {
 //업로드 후 스토리지 경로를 반환. 경로의 첫 폴더는 내 id여야 RLS를 통과한다
 export const uploadChatImage = async (myId: string, file: File): Promise<string> => {
   const body = await resizeImage(file)
-  const extension = body.type === GIF_TYPE ? 'gif' : 'jpg'
+  const extension = EXTENSION_BY_TYPE[body.type] ?? 'jpg'
   const path = `${myId}/${crypto.randomUUID()}.${extension}`
   const { error } = await supabase.storage.from(CHAT_IMAGE_BUCKET).upload(path, body, { contentType: body.type })
   if (error) throw error

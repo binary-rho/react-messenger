@@ -1,5 +1,5 @@
-import { Fragment, useState, useLayoutEffect, useRef } from 'react'
-import styled from 'styled-components'
+import { Fragment, useEffect, useState, useLayoutEffect, useRef } from 'react'
+import styled, { css, keyframes } from 'styled-components'
 import { colors } from '../style/colors'
 import { imgPath } from '../style/imgPath'
 import { Link } from 'react-router-dom'
@@ -15,11 +15,13 @@ import { PhotoIcon, SmileIcon } from './icons'
 import { MessageReaction } from '../api/reactions'
 import { MessageReactionChips, MiniEmojiPicker } from './MessageReactions'
 import { ReplyComposerBar, ReplyQuote, ReplyTarget } from './ReplyQuote'
+import { findMentionQuery, insertMention, splitMentions } from '../lib/mention'
 import { MessageActionToolbar, Toolbar as MessageToolbar } from './MessageActionToolbar'
 
 const TIME_FORMAT = 'hh:mma'
 const UNKNOWN_SENDER_NAME = '알 수 없음'
 const LOAD_OLDER_SCROLL_THRESHOLD_PX = 80
+const HIGHLIGHT_DURATION_MS = 1500
 
 export interface ChatRoomMessage {
   id: number
@@ -65,6 +67,12 @@ export const ChatRoomView = ({
   const [reactionPickerMessageId, setReactionPickerMessageId] = useState<number | null>(null)
   //답장 중인 메시지 (다음에 보내는 메시지 한 건에 붙고 전송하면 해제)
   const [replyingTo, setReplyingTo] = useState<ChatRoomMessage | null>(null)
+  //'@'를 입력 중일 때 보여줄 멘션 검색어 (null이면 멘션 목록을 닫음)
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null)
+  //답장 원본으로 이동 중인 메시지 id (아직 안 불러왔으면 이전 메시지를 더 불러오며 찾는다)
+  const [jumpTargetId, setJumpTargetId] = useState<number | null>(null)
+  //이동한 뒤 잠깐 강조할 메시지 id
+  const [highlightedMessageId, setHighlightedMessageId] = useState<number | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const imageFileInputRef = useRef<HTMLInputElement>(null)
   const chatListRef = useRef<HTMLDivElement>(null)
@@ -86,12 +94,62 @@ export const ChatRoomView = ({
     prevFirstMessageIdRef.current = firstMessageId
   }, [messages])
 
+  useEffect(() => {
+    if (jumpTargetId === null) return
+    const target = chatListRef.current?.querySelector(`[data-message-id="${jumpTargetId}"]`)
+    if (target) {
+      target.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      setHighlightedMessageId(jumpTargetId)
+      setJumpTargetId(null)
+    } else if (hasMore) {
+      onLoadOlder()
+    } else {
+      setJumpTargetId(null)
+    }
+  }, [jumpTargetId, messages, hasMore, onLoadOlder])
+
+  useEffect(() => {
+    if (highlightedMessageId === null) return
+    const timer = setTimeout(() => setHighlightedMessageId(null), HIGHLIGHT_DURATION_MS)
+    return () => clearTimeout(timer)
+  }, [highlightedMessageId])
+
   const onChatListScroll = (e: React.UIEvent<HTMLDivElement>) => {
     if (hasMore && e.currentTarget.scrollTop < LOAD_OLDER_SCROLL_THRESHOLD_PX) onLoadOlder()
   }
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value)
+    setMentionQuery(findMentionQuery(e.target.value.slice(0, e.target.selectionStart ?? e.target.value.length)))
+  }
+
+  //나를 뺀 채팅방 사람들 중 '@' 뒤 검색어로 시작하는 이름
+  const mentionCandidates =
+    mentionQuery === null
+      ? []
+      : Array.from(senders.values()).filter(
+          (profile) => profile.id !== myId && profile.name.toLowerCase().startsWith(mentionQuery.toLowerCase()),
+        )
+
+  const onMentionSelect = (name: string) => {
+    const caret = inputRef.current?.selectionStart ?? inputValue.length
+    const inserted = insertMention(inputValue, caret, name)
+    setInputValue(inserted.text)
+    setMentionQuery(null)
+    requestAnimationFrame(() => {
+      inputRef.current?.focus()
+      inputRef.current?.setSelectionRange(inserted.caret, inserted.caret)
+    })
+  }
+
+  const onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (mentionQuery === null) return
+    if (e.key === 'Escape') setMentionQuery(null)
+    //IME 조합 중 Enter는 무시하고, 후보가 있으면 첫 후보를 멘션으로 넣는다
+    if (e.key === 'Enter' && !e.nativeEvent.isComposing && mentionCandidates.length > 0) {
+      e.preventDefault()
+      onMentionSelect(mentionCandidates[0].name)
+    }
   }
 
   //inputRef설정 함수
@@ -111,6 +169,7 @@ export const ChatRoomView = ({
     }
     const content = inputValue
     setInputValue('')
+    setMentionQuery(null)
     try {
       await sendWithReply(content)
     } catch (error) {
@@ -209,7 +268,14 @@ export const ChatRoomView = ({
     if (emojiFileName) return <EmojiMessageImg src={resolveEmojiSrc(emojiFileName)} alt="이모티콘" />
     const imagePath = parseImageContent(content)
     if (imagePath) return <ChatImageMessage path={imagePath} />
-    return <Bubble>{content}</Bubble>
+    const mentionNames = Array.from(senders.values()).map((profile) => profile.name)
+    return (
+      <Bubble>
+        {splitMentions(content, mentionNames).map((segment, index) =>
+          segment.isMention ? <MentionText key={index}>{segment.text}</MentionText> : segment.text,
+        )}
+      </Bubble>
+    )
   }
 
   //불러온 메시지 중에서 답장 원본을 찾음 (더 이전 페이지에 있어 아직 없으면 null)
@@ -222,16 +288,26 @@ export const ChatRoomView = ({
   const renderMessageBody = (chat: ChatRoomMessage, Bubble: typeof ChattingBox1, isMine: boolean) => (
     <>
       {chat.reply_to_id !== null && chat.reply_to_id !== undefined && (
-        <ReplyQuote target={getReplyTarget(chat.reply_to_id)} />
+        <ReplyQuote
+          target={getReplyTarget(chat.reply_to_id)}
+          onClick={() => setJumpTargetId(chat.reply_to_id)}
+        />
       )}
-      <ReactionTarget $isMine={isMine}>
+      <ReactionTarget $isMine={isMine} $isHighlighted={highlightedMessageId === chat.id} data-message-id={chat.id}>
         <MessageActionToolbar
           onReactionClick={() => setReactionPickerMessageId((current) => (current === chat.id ? null : chat.id))}
           onReplyClick={() => onReplySelect(chat)}
         />
         {renderContent(chat.content, Bubble)}
+        {reactionPickerMessageId === chat.id && (
+          <MiniEmojiPicker
+            isMine={isMine}
+            boundsRef={chatListRef}
+            onSelect={(emoji) => onReactionSelect(chat.id, emoji)}
+            onClose={() => setReactionPickerMessageId(null)}
+          />
+        )}
       </ReactionTarget>
-      {reactionPickerMessageId === chat.id && <MiniEmojiPicker onSelect={(emoji) => onReactionSelect(chat.id, emoji)} />}
       <MessageReactionChips
         reactions={reactions.get(chat.id) ?? []}
         myId={myId}
@@ -335,6 +411,16 @@ export const ChatRoomView = ({
         </EmojiPicker>
       )}
       <BottomBox>
+        {mentionCandidates.length > 0 && (
+          <MentionList>
+            {mentionCandidates.map((profile) => (
+              <MentionItem key={profile.id} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => onMentionSelect(profile.name)}>
+                <MentionAvatar src={resolveAvatarSrc(profile.avatar_url)} />
+                {profile.name}
+              </MentionItem>
+            ))}
+          </MentionList>
+        )}
         <ChatArea>
           <InputContainer onSubmit={onSubmit}>
             <PlusIcon
@@ -355,6 +441,7 @@ export const ChatRoomView = ({
                 ref={inputRef}
                 value={inputValue}
                 onChange={onChange}
+                onKeyDown={onInputKeyDown}
                 onClick={handleInputClick}
                 onPaste={onInputPaste}
               />
@@ -445,6 +532,7 @@ const DotsIcon = styled.img`
   cursor: pointer;
 `
 const BottomBox = styled.div`
+  position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -526,8 +614,23 @@ const ChattingBox2 = styled.span`
   word-break: break-all;
 `
 
-const ReactionTarget = styled.div<{ $isMine: boolean }>`
+const highlightFlash = keyframes`
+  from {
+    background-color: ${colors.grey_100};
+  }
+  to {
+    background-color: transparent;
+  }
+`
+
+const ReactionTarget = styled.div<{ $isMine: boolean; $isHighlighted: boolean }>`
   position: relative;
+  border-radius: 0.6rem;
+  ${({ $isHighlighted }) =>
+    $isHighlighted &&
+    css`
+      animation: ${highlightFlash} ${HIGHLIGHT_DURATION_MS}ms ease-out;
+    `}
   display: flex;
   flex-direction: column;
   width: fit-content;
@@ -725,4 +828,48 @@ const NextDay = styled.span`
   /* border: 0.1rem solid ;
   border-radius: 5rem; */
   padding: 0.35rem 1.7rem 0.35rem 1.7rem;
+`
+
+const MentionText = styled.strong`
+  font-family: 'Pretendard-SemiBold';
+  text-decoration: underline;
+`
+
+const MentionList = styled.div`
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 180px;
+  overflow-y: auto;
+  background-color: ${colors.surface};
+  border-top: 1px solid ${colors.grey_100};
+`
+
+const MentionItem = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: ${colors.grey_900};
+  font-family: 'Pretendard-Medium';
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background-color: ${colors.grey_50};
+  }
+`
+
+const MentionAvatar = styled.img`
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
 `

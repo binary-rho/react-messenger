@@ -4,6 +4,7 @@ import { fetchGroupById, fetchGroupMessageById, subscribeToGroupMessages } from 
 import { fetchMessageById, subscribeToMyMessages } from '../api/messages'
 import { fetchProfilesByIds } from '../api/profile'
 import { MessageReaction, subscribeToReactions } from '../api/reactions'
+import { isMentioned } from '../lib/mention'
 import { toPreviewText } from '../lib/messagePreview'
 import { isRegisteredMiniEmoji } from '../lib/miniEmoji'
 import { AppNotification, showNotification } from '../lib/notification'
@@ -48,10 +49,11 @@ export const MessageNotifier = () => {
     const unsubscribeMessages = subscribeToMyMessages(me.id, async (message) => {
       if (message.sender_id === me.id || document.hasFocus()) return
       const [sender] = await fetchProfilesByIds([message.sender_id])
+      const mentioned = isMentioned(message.content, me.name)
       showNotification(
         {
           title: sender?.name ?? '새 메시지',
-          body: toPreviewText(message.content),
+          body: `${mentioned ? '회원님을 언급했어요: ' : ''}${toPreviewText(message.content)}`,
           path: `/chatting/${message.sender_id}`,
         },
         navigate,
@@ -64,7 +66,9 @@ export const MessageNotifier = () => {
       showNotification(
         {
           title: group?.name ?? '단톡방',
-          body: `${sender?.name ?? ''}: ${toPreviewText(message.content)}`,
+          body: isMentioned(message.content, me.name)
+            ? `${sender?.name ?? ''}님이 회원님을 언급했어요: ${toPreviewText(message.content)}`
+            : `${sender?.name ?? ''}: ${toPreviewText(message.content)}`,
           path: `/group/${message.group_id}`,
         },
         navigate,
@@ -81,7 +85,7 @@ export const MessageNotifier = () => {
       unsubscribeGroupMessages()
       unsubscribeReactions()
     }
-  }, [me.id, navigate])
+  }, [me.id, me.name, navigate])
 
   return null
 }

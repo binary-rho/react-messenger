@@ -24,8 +24,10 @@ const ReplyInfo = ({ target }: { target: ReplyTarget }) => (
 )
 
 //말풍선 위에 붙는 답장 대상 인용 블록 (원본을 못 찾으면 안내 문구)
-export const ReplyQuote = ({ target }: { target: ReplyTarget | null }) => (
-  <QuoteBox>{target ? <ReplyInfo target={target} /> : <ReplyContent>{MISSING_ORIGINAL_TEXT}</ReplyContent>}</QuoteBox>
+export const ReplyQuote = ({ target, onClick }: { target: ReplyTarget | null; onClick?: () => void }) => (
+  <QuoteBox $clickable={Boolean(onClick)} onClick={onClick}>
+    {target ? <ReplyInfo target={target} /> : <ReplyContent>{MISSING_ORIGINAL_TEXT}</ReplyContent>}
+  </QuoteBox>
 )
 
 //입력창 위에 붙는 "지금 답장 중인 메시지" 바
@@ -40,7 +42,8 @@ export const ReplyComposerBar = ({ target, onCancel }: { target: ReplyTarget; on
   </ComposerBar>
 )
 
-const QuoteBox = styled.div`
+const QuoteBox = styled.div<{ $clickable?: boolean }>`
+  cursor: ${({ $clickable }) => ($clickable ? 'pointer' : 'default')};
   display: flex;
   flex-direction: column;
   gap: 2px;

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import styled from 'styled-components'
 import { colors } from '../style/colors'
 import { MessageReaction } from '../api/reactions'
@@ -69,20 +69,64 @@ export const MessageReactionChips = ({
   )
 }
 
-//메시지를 눌렀을 때 그 아래에 열리는 미니 이모티콘 선택 줄
-export const MiniEmojiPicker = ({ onSelect }: { onSelect: (emoji: string) => void }) => (
-  <PickerRow>
-    {MINI_EMOJI_FILES.length === 0 ? (
-      <EmptyText>등록된 미니 이모티콘이 없어요.</EmptyText>
-    ) : (
-      MINI_EMOJI_FILES.map((fileName) => (
-        <PickerButton key={fileName} type="button" onClick={() => onSelect(fileName)}>
-          <PickerImg src={resolveMiniEmojiSrc(fileName)} alt={fileName} />
-        </PickerButton>
-      ))
-    )}
-  </PickerRow>
-)
+//선택 줄과 위/아래 경계 사이에 두는 여유 간격
+const PICKER_EDGE_MARGIN_PX = 8
+const PICKER_TOOLBAR_OFFSET_PX = 34
+
+type PickerDirection = 'up' | 'down'
+
+//메시지를 눌렀을 때 그 메시지 옆에 열리는 미니 이모티콘 선택 줄.
+//아래 공간이 모자라면 위로 열리고, 바깥(backdrop)을 누르거나 Esc를 누르면 닫힌다
+export const MiniEmojiPicker = ({
+  onSelect,
+  onClose,
+  boundsRef,
+  isMine,
+}: {
+  onSelect: (emoji: string) => void
+  onClose: () => void
+  boundsRef: RefObject<HTMLElement>
+  isMine: boolean
+}) => {
+  const pickerRef = useRef<HTMLDivElement>(null)
+  const [direction, setDirection] = useState<PickerDirection | null>(null)
+
+  //열리는 순간 아래 공간이 충분한지 재서 방향을 정한다 (정해지기 전에는 숨겨 둔다)
+  useLayoutEffect(() => {
+    const picker = pickerRef.current
+    const anchor = picker?.offsetParent
+    if (!picker || !anchor) return
+    const anchorRect = anchor.getBoundingClientRect()
+    const bounds = boundsRef.current?.getBoundingClientRect()
+    const spaceBelow = (bounds?.bottom ?? window.innerHeight) - anchorRect.bottom
+    const spaceAbove = anchorRect.top - (bounds?.top ?? 0)
+    const needed = picker.offsetHeight + PICKER_TOOLBAR_OFFSET_PX + PICKER_EDGE_MARGIN_PX
+    setDirection(spaceBelow >= needed || spaceBelow >= spaceAbove ? 'down' : 'up')
+  }, [boundsRef])
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [onClose])
+
+  return (
+    <>
+      <PickerBackdrop onClick={onClose} />
+      <PickerRow ref={pickerRef} $direction={direction} $isMine={isMine}>
+        {MINI_EMOJI_FILES.length === 0 ? (
+          <EmptyText>등록된 미니 이모티콘이 없어요.</EmptyText>
+        ) : (
+          MINI_EMOJI_FILES.map((fileName) => (
+            <PickerButton key={fileName} type="button" onClick={() => onSelect(fileName)}>
+              <PickerImg src={resolveMiniEmojiSrc(fileName)} alt={fileName} />
+            </PickerButton>
+          ))
+        )}
+      </PickerRow>
+    </>
+  )
+}
 
 const ChipRow = styled.div`
   display: flex;
@@ -114,12 +158,25 @@ const ChipCount = styled.span`
   font-size: 12px;
 `
 
-const PickerRow = styled.div`
+//보이지 않는 전체 화면 막. 선택 줄 밖을 누르면 닫히게 한다
+const PickerBackdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+`
+
+const PickerRow = styled.div<{ $direction: PickerDirection | null; $isMine: boolean }>`
+  position: absolute;
+  z-index: 11;
+  ${({ $isMine }) => ($isMine ? 'right: 0;' : 'left: 0;')}
+  ${({ $direction }) =>
+    $direction === 'up' ? 'bottom: calc(100% + 4px);' : `top: calc(100% + ${PICKER_TOOLBAR_OFFSET_PX}px);`}
+  visibility: ${({ $direction }) => ($direction ? 'visible' : 'hidden')};
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+  width: max-content;
   max-width: 16rem;
-  margin-bottom: 0.5rem;
   padding: 6px 8px;
   border-radius: 12px;
   border: 1px solid ${colors.grey_100};
