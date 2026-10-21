@@ -646,8 +646,8 @@ const ReactionTarget = styled.div<{ $isMine: boolean; $isHighlighted: boolean }>
   }
 `
 
-const EMOJI_MESSAGE_SIZE_PX = 112
-const EMOJI_PICKER_ITEM_SIZE_PX = 64
+const EMOJI_MESSAGE_SIZE_PX = 120
+const EMOJI_PICKER_ITEM_SIZE_PX = 72
 const EMOJI_PICKER_MAX_HEIGHT_PX = 220
 
 const EmojiMessageImg = styled.img`
