@@ -400,6 +400,7 @@ export const ChatRoomView = ({
       )}
       {replyingTo && <ReplyComposerBar target={toReplyTarget(replyingTo)} onCancel={() => setReplyingTo(null)} />}
       {openPanel === 'attach' && <AttachMenu items={attachMenuItems} />}
+      {openPanel === 'emoji' && <EmojiPickerBackdrop onClick={() => setOpenPanel(null)} />}
       {openPanel === 'emoji' && (
         <EmojiPicker>
           {EMOJI_FILES.length === 0 ? (
@@ -536,6 +537,7 @@ const DotsIcon = styled.img`
 `
 const BottomBox = styled.div`
   position: relative;
+  z-index: 21;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -644,7 +646,7 @@ const ReactionTarget = styled.div<{ $isMine: boolean; $isHighlighted: boolean }>
   }
 `
 
-const EMOJI_MESSAGE_SIZE_PX = 100
+const EMOJI_MESSAGE_SIZE_PX = 112
 const EMOJI_PICKER_ITEM_SIZE_PX = 64
 const EMOJI_PICKER_MAX_HEIGHT_PX = 220
 
@@ -667,6 +669,14 @@ const EmojiPicker = styled.div`
   overflow-y: auto;
   background-color: ${colors.surface};
   border-top: 1px solid ${colors.grey_100};
+  position: relative;
+  z-index: 21;
+`
+
+const EmojiPickerBackdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 20;
 `
 
 const EmojiEmptyText = styled.span`
