@@ -1,6 +1,6 @@
 import styled from 'styled-components'
 import { colors } from '../style/colors'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSetRecoilState } from 'recoil'
 import { imgPath } from '../style/imgPath'
 import { signOut } from '../api/auth'
@@ -10,10 +10,16 @@ import { NotificationToggle } from './NotificationToggle'
 import { ThemeToggle } from './ThemeToggle'
 import { CameraIcon } from './icons'
 
-export const MyPage = () => {
+interface MyPageProps {
+  isEditing: boolean
+  setIsEditing: (isEditing: boolean) => void
+  //상단 완료 버튼이 저장을 요청할 수 있게 넘겨주는 핸들러
+  finishEditRef: React.MutableRefObject<(() => Promise<void>) | null>
+}
+
+export const MyPage = ({ isEditing, setIsEditing, finishEditRef }: MyPageProps) => {
   const me = useMyProfile()
   const setMyProfile = useSetRecoilState(myProfileState)
-  const [isEditing, setIsEditing] = useState<boolean>(false)
   const [inputValue, setInputValue] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -30,11 +36,6 @@ export const MyPage = () => {
     }
   }
 
-  const startEdit = () => {
-    setInputValue(me.name)
-    setIsEditing(true)
-  }
-
   //편집 중일 때만 이름·사진을 바꿀 수 있고, 완료를 누르면 바뀐 이름을 저장한다
   const finishEdit = async () => {
     if (inputValue !== me.name) {
@@ -49,6 +50,14 @@ export const MyPage = () => {
     setInputValue('')
     setIsEditing(false)
   }
+
+  finishEditRef.current = finishEdit
+
+  //편집을 시작할 때 입력창에 현재 이름을 채운다
+  useEffect(() => {
+    if (isEditing) setInputValue(me.name)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing])
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -70,9 +79,6 @@ export const MyPage = () => {
   return (
     <>
       <BackgroundImg src={imgPath.path[8]} />
-      <EditButton type="button" onClick={isEditing ? finishEdit : startEdit}>
-        {isEditing ? '완료' : '편집'}
-      </EditButton>
       <MyPageContainer>
         <ProfileBox>
           <AvatarBox $editing={isEditing} onClick={isEditing ? () => fileInputRef.current?.click() : undefined}>
@@ -153,20 +159,6 @@ const ProfileBox = styled.div`
   display: flex;
   z-index: 1;
   margin-top: 1.66rem;
-`
-const EditButton = styled.button`
-  position: absolute;
-  top: 0.75rem;
-  left: 1.25rem;
-  z-index: 2;
-  padding: 0.25rem 0.75rem;
-  border: none;
-  border-radius: 1rem;
-  background-color: rgba(0, 0, 0, 0.4);
-  color: #fff;
-  font-family: 'Pretendard-Medium';
-  font-size: 0.875rem;
-  cursor: pointer;
 `
 const AvatarBox = styled.div<{ $editing: boolean }>`
   position: relative;

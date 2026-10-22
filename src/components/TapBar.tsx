@@ -26,6 +26,8 @@ export const TapBar = () => {
     localStorage.getItem('isSetting') ? localStorage.getItem('isSetting') === 'true' : false,
   )
   const [inputValue, setInputValue] = useState<string>('')
+  const [isEditing, setIsEditing] = useState<boolean>(false)
+  const finishEditRef = useRef<(() => Promise<void>) | null>(null)
 
   useEffect(() => {
     localStorage.setItem('isFriend', isFriend.toString())
@@ -48,7 +50,20 @@ export const TapBar = () => {
     <>
       <TopHeading>
         <UserContainer>
-          <EditIcon style={{ width: '1.9rem', color: isSetting ? colors.white : colors.grey_700 }} />
+          {isSetting && isEditing ? (
+            <EditButton type="button" onClick={() => finishEditRef.current?.()}>
+              완료
+            </EditButton>
+          ) : (
+            <EditIcon
+              onClick={() => isSetting && setIsEditing(true)}
+              style={{
+                width: '1.9rem',
+                color: isSetting ? colors.white : colors.grey_700,
+                cursor: isSetting ? 'pointer' : 'default',
+              }}
+            />
+          )}
           <TitleText style={{ color: isSetting ? colors.white : colors.grey_900 }}>
             {isFriend ? '친구들' : isSetting ? '내 설정' : '채팅'}
           </TitleText>
@@ -75,7 +90,7 @@ export const TapBar = () => {
           {isFriend ? <FriendList searchValue={inputValue} /> : <ChatList searchValue={inputValue} />}
         </>
       ) : (
-        <MyPage />
+        <MyPage isEditing={isEditing} setIsEditing={setIsEditing} finishEditRef={finishEditRef} />
       )}
 
       <TapContainer>
@@ -84,6 +99,7 @@ export const TapBar = () => {
             setIsChatting(true)
             setIsFriend(false)
             setIsSetting(false)
+            setIsEditing(false)
           }}
         >
           <ChattingIcon style={{ color: isChatList ? colors.purple : colors.grey_400, width: '1.75rem' }} />
@@ -94,6 +110,7 @@ export const TapBar = () => {
             setIsChatting(false)
             setIsFriend(true)
             setIsSetting(false)
+            setIsEditing(false)
           }}
         >
           <FriendsIcon style={{ color: isFriend ? colors.purple : colors.grey_400, width: '1.75rem' }} />
@@ -131,6 +148,18 @@ const UserContainer = styled.div`
   align-items: center;
   margin: 0rem 1.25rem;
   z-index: 1;
+`
+
+const EditButton = styled.button`
+  width: 1.9rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: ${colors.white};
+  font-family: 'Pretendard-Medium';
+  font-size: 1.125rem;
+  white-space: nowrap;
+  cursor: pointer;
 `
 
 const TitleText = styled.span`
