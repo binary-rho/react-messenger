@@ -414,7 +414,7 @@ export const ChatRoomView = ({
           )}
         </EmojiPicker>
       )}
-      <BottomBox>
+      <BottomBox $raised={openPanel === 'emoji'}>
         {mentionCandidates.length > 0 && (
           <MentionList>
             {mentionCandidates.map((profile) => (
@@ -535,9 +535,9 @@ const DotsIcon = styled.img`
   height: 24px;
   cursor: pointer;
 `
-const BottomBox = styled.div`
+const BottomBox = styled.div<{ $raised?: boolean }>`
   position: relative;
-  z-index: 21;
+  z-index: ${({ $raised }) => ($raised ? 21 : 'auto')};
   display: flex;
   flex-direction: column;
   width: 100%;
