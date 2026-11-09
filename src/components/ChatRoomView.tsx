@@ -16,12 +16,14 @@ import { MessageReaction } from '../api/reactions'
 import { MessageReactionChips, MiniEmojiPicker } from './MessageReactions'
 import { ReplyComposerBar, ReplyQuote, ReplyTarget } from './ReplyQuote'
 import { findMentionQuery, insertMention, splitMentions } from '../lib/mention'
+import { toPreviewText } from '../lib/messagePreview'
 import { MessageActionToolbar, Toolbar as MessageToolbar } from './MessageActionToolbar'
 
 const TIME_FORMAT = 'hh:mma'
 const UNKNOWN_SENDER_NAME = '알 수 없음'
 const LOAD_OLDER_SCROLL_THRESHOLD_PX = 80
 const HIGHLIGHT_DURATION_MS = 1500
+const NEAR_BOTTOM_THRESHOLD_PX = 120
 
 export interface ChatRoomMessage {
   id: number
@@ -79,6 +81,11 @@ export const ChatRoomView = ({
 
   const prevScrollHeightRef = useRef<number>(0)
   const prevFirstMessageIdRef = useRef<number | undefined>(undefined)
+  const prevLastMessageIdRef = useRef<number | undefined>(undefined)
+  //지금 가장 아래 근처를 보고 있는지 (위로 올려 보는 중이면 새 메시지가 와도 끌어내리지 않는다)
+  const isNearBottomRef = useRef<boolean>(true)
+  //위로 올려 보는 중에 새로 온 메시지 알림 (누르면 가장 아래로 이동)
+  const [newMessageNotice, setNewMessageNotice] = useState<ChatRoomMessage | null>(null)
 
   //이전 메시지가 위에 붙으면 보던 위치를 유지하고, 그 외(첫 로드, 새 메시지)에는 가장 아래로 스크롤
   useLayoutEffect(() => {
@@ -88,11 +95,29 @@ export const ChatRoomView = ({
     const prevFirstMessageId = prevFirstMessageIdRef.current
     const isOlderPrepended =
       prevFirstMessageId !== undefined && firstMessageId !== undefined && firstMessageId < prevFirstMessageId
-    if (isOlderPrepended) element.scrollTop += element.scrollHeight - prevScrollHeightRef.current
-    else element.scrollTop = element.scrollHeight
+    const lastMessage = messages[messages.length - 1]
+    const prevLastMessageId = prevLastMessageIdRef.current
+    const isNewAppended =
+      prevLastMessageId !== undefined && lastMessage !== undefined && lastMessage.id > prevLastMessageId
+    if (isOlderPrepended) {
+      element.scrollTop += element.scrollHeight - prevScrollHeightRef.current
+    } else if (isNewAppended && !isNearBottomRef.current && lastMessage.sender_id !== myId) {
+      //위를 보는 중에 상대 메시지가 오면 위치를 유지하고 알림만 띄운다 (카톡처럼)
+      setNewMessageNotice(lastMessage)
+    } else {
+      element.scrollTop = element.scrollHeight
+      setNewMessageNotice(null)
+    }
     prevScrollHeightRef.current = element.scrollHeight
     prevFirstMessageIdRef.current = firstMessageId
-  }, [messages])
+    prevLastMessageIdRef.current = lastMessage?.id
+  }, [messages, myId])
+
+  const scrollToBottom = () => {
+    const element = chatListRef.current
+    if (element) element.scrollTo({ top: element.scrollHeight, behavior: 'smooth' })
+    setNewMessageNotice(null)
+  }
 
   useEffect(() => {
     if (jumpTargetId === null) return
@@ -115,7 +140,10 @@ export const ChatRoomView = ({
   }, [highlightedMessageId])
 
   const onChatListScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    if (hasMore && e.currentTarget.scrollTop < LOAD_OLDER_SCROLL_THRESHOLD_PX) onLoadOlder()
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
+    isNearBottomRef.current = scrollHeight - scrollTop - clientHeight < NEAR_BOTTOM_THRESHOLD_PX
+    if (isNearBottomRef.current) setNewMessageNotice(null)
+    if (hasMore && scrollTop < LOAD_OLDER_SCROLL_THRESHOLD_PX) onLoadOlder()
   }
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -323,7 +351,7 @@ export const ChatRoomView = ({
   const isChatOn = messages.length > 0
 
   return (
-    <ChattingContainer>
+    <ChattingContainer data-chat-room>
       <TopHeading>
         <UserContainer>
           <Link to="/" style={{ display: 'contents' }}>
@@ -397,6 +425,15 @@ export const ChatRoomView = ({
           <NoChatImg src={imgPath.path[7]} />
           <NoChatText>작성된 메시지가 없습니다.</NoChatText>
         </NoChattingList>
+      )}
+      {newMessageNotice && (
+        <NewMessageAnchor>
+          <NewMessageNotice type="button" onClick={scrollToBottom}>
+            <NewMessageSender>{senders.get(newMessageNotice.sender_id)?.name ?? UNKNOWN_SENDER_NAME}</NewMessageSender>
+            <NewMessageText>{toPreviewText(newMessageNotice.content)}</NewMessageText>
+            <NewMessageArrow>↓</NewMessageArrow>
+          </NewMessageNotice>
+        </NewMessageAnchor>
       )}
       {replyingTo && <ReplyComposerBar target={toReplyTarget(replyingTo)} onCancel={() => setReplyingTo(null)} />}
       {openPanel === 'attach' && <AttachMenu items={attachMenuItems} />}
@@ -483,6 +520,53 @@ const ChattingContainer = styled.div`
   background-color: ${colors.grey_50};
   align-items: center;
   ${appFrame}
+`
+
+//채팅 목록 바로 아래에 높이 0으로 붙어 알림이 목록 맨 아래에 떠 보이게 하는 기준점
+const NewMessageAnchor = styled.div`
+  position: relative;
+  flex-shrink: 0;
+  width: 100%;
+  height: 0;
+  z-index: 3;
+`
+
+const NewMessageNotice = styled.button`
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid ${colors.grey_100};
+  border-radius: 1.5rem;
+  background-color: ${colors.surface};
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  color: ${colors.grey_900};
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+`
+
+const NewMessageSender = styled.span`
+  flex-shrink: 0;
+  font-family: 'Pretendard-SemiBold';
+`
+
+const NewMessageText = styled.span`
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'Pretendard-Regular';
+`
+
+const NewMessageArrow = styled.span`
+  flex-shrink: 0;
+  color: ${colors.grey_400};
 `
 
 const SafeAreaImg2 = styled.img`
@@ -631,8 +715,9 @@ const ChattingBox2 = styled.span`
     max-width: none;
     padding: 0.25rem 0;
     border-radius: 0;
-    font-size: 1rem;
-    line-height: 160%;
+    font-size: 1.0625rem;
+    line-height: 170%;
+    margin-bottom: 0.75rem;
   }
 `
 
@@ -736,12 +821,20 @@ const ProfileImg = styled.img`
   object-fit: cover;
   flex-shrink: 0;
   margin-right: 0.5rem;
+
+  :root[data-molcom='true'] & {
+    display: none;
+  }
 `
 
 const NoProfileImg = styled.div`
   flex-shrink: 0;
   width: 3.125rem;
   margin-right: 0.5rem;
+
+  :root[data-molcom='true'] & {
+    display: none;
+  }
 `
 
 const FriendChatContainer = styled.div`
@@ -760,7 +853,7 @@ const FriendName = styled.span`
   font-family: 'Pretendard-Medium';
   font-size: 14px;
   line-height: 120%; /* 16.8px */
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
 `
 
 const ChatTime = styled.span`

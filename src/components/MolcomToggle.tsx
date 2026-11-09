@@ -6,5 +6,5 @@ import { SettingToggleRow } from './SettingToggleRow'
 export const MolcomToggle = () => {
   const [isMolcom, setIsMolcom] = useRecoilState(molcomModeState)
 
-  return <SettingToggleRow title="몰컴 모드" hint="GPT처럼 내 메시지만 말풍선으로 보여요" isOn={isMolcom} onToggle={() => setIsMolcom(!isMolcom)} />
+  return <SettingToggleRow title="몰컴 모드" isOn={isMolcom} onToggle={() => setIsMolcom(!isMolcom)} />
 }

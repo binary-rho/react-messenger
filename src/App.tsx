@@ -44,10 +44,10 @@ const GlobalStyle = createGlobalStyle`
     ${themeCssVariables.dark}
     color-scheme: dark;
   }
-  :root[data-molcom='true'] {
+  :root[data-molcom='true'] [data-chat-room] {
     ${themeCssVariables.molcomLight}
   }
-  :root[data-molcom='true'][data-theme='dark'] {
+  :root[data-molcom='true'][data-theme='dark'] [data-chat-room] {
     ${themeCssVariables.molcomDark}
   }
   input, textarea {
