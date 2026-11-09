@@ -454,6 +454,7 @@ export const ChatRoomView = ({
           )}
         </EmojiPicker>
       )}
+      {!isMolcom && (
       <BottomBox $raised={openPanel === 'emoji'}>
         {mentionCandidates.length > 0 && (
           <MentionList>
@@ -510,11 +511,51 @@ export const ChatRoomView = ({
           </InputContainer>
         </ChatArea>
       </BottomBox>
+      )}
       {isMolcom && (
-        <MolcomFooter>
-          <MolcomDisclaimer>AI는 실수를 할 수 있습니다.</MolcomDisclaimer>
-          <MolcomModel>Sonnet 5.5 중간</MolcomModel>
-        </MolcomFooter>
+        <MolcomBottom $raised={openPanel === 'emoji'}>
+          {mentionCandidates.length > 0 && (
+            <MentionList>
+              {mentionCandidates.map((profile) => (
+                <MentionItem key={profile.id} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => onMentionSelect(profile.name)}>
+                  <MentionAvatar src={resolveAvatarSrc(profile.avatar_url)} />
+                  {profile.name}
+                </MentionItem>
+              ))}
+            </MentionList>
+          )}
+          <MolcomCard onSubmit={onSubmit}>
+            <input
+              ref={imageFileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={onImageFileChange}
+              style={{ display: 'none' }}
+            />
+            <MolcomInput
+              placeholder={isUploading ? '사진을 보내는 중...' : '답글'}
+              ref={inputRef}
+              value={inputValue}
+              onChange={onChange}
+              onKeyDown={onInputKeyDown}
+              onClick={handleInputClick}
+              onPaste={onInputPaste}
+            />
+            <MolcomSendButton type="submit" aria-label="보내기">
+              ↵
+            </MolcomSendButton>
+          </MolcomCard>
+          <MolcomToolbar>
+            <MolcomToolButton type="button" onClick={() => togglePanel('emoji')} aria-label="이모티콘">
+              <SmileIcon size={22} />
+            </MolcomToolButton>
+            <MolcomToolButton type="button" onClick={() => imageFileInputRef.current?.click()} aria-label="사진">
+              <PhotoIcon size={22} />
+            </MolcomToolButton>
+            <MolcomDisclaimer>AI는 실수를 할 수 있습니다.</MolcomDisclaimer>
+            <MolcomModel>Sonnet 5.5 중간</MolcomModel>
+          </MolcomToolbar>
+        </MolcomBottom>
       )}
       <SafeAreaImg2 src={imgPath.path[2]} />
       {overlay}
@@ -739,14 +780,14 @@ const ChattingBox2 = styled.span`
     display: block;
     width: 100%;
     max-width: none;
-    padding: 0.25rem 0;
+    padding: 0.125rem 0;
     border-radius: 0;
-    text-align: justify;
+    text-align: center;
     word-break: keep-all;
     overflow-wrap: anywhere;
     font-size: 1.0625rem;
-    line-height: 170%;
-    margin-bottom: 0.75rem;
+    line-height: 160%;
+    margin-bottom: 0.25rem;
   }
 `
 
@@ -895,8 +936,12 @@ const FriendName = styled.span`
   line-height: 120%; /* 16.8px */
   margin-bottom: 0.25rem;
 
+  /* 몰컴: 이름은 보여주되 "Claude" 라벨처럼 답변 위에 작게 */
   :root[data-molcom='true'] & {
-    display: none;
+    align-self: center;
+    margin-top: 0.75rem;
+    margin-bottom: 0.375rem;
+    font-family: 'Pretendard-SemiBold';
   }
 `
 
@@ -912,18 +957,69 @@ const ChatTime = styled.span`
   }
 `
 
-const MolcomFooter = styled.div`
-  display: flex;
+const MolcomBottom = styled.div<{ $raised?: boolean }>`
+  position: relative;
+  z-index: ${({ $raised }) => ($raised ? 21 : 'auto')};
   flex-shrink: 0;
   width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem 0.75rem;
+  padding: 0.75rem 1rem 0.5rem;
   background-color: ${colors.surface};
+`
+
+const MolcomCard = styled.form`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 3.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid ${colors.grey_100};
+  border-radius: 1.5rem;
+  background-color: ${colors.surface};
+`
+
+const MolcomInput = styled.input`
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: ${colors.grey_900};
+  font-family: 'Pretendard-Regular';
+  font-size: 16px;
+
+  &::placeholder {
+    color: ${colors.grey_300};
+  }
+`
+
+const MolcomSendButton = styled.button`
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: ${colors.grey_400};
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+`
+
+const MolcomToolbar = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 0.5rem 0.25rem;
   color: ${colors.grey_400};
   font-family: 'Pretendard-Regular';
   font-size: 12px;
+`
+
+const MolcomToolButton = styled.button`
+  display: flex;
+  flex-shrink: 0;
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: ${colors.grey_900};
+  cursor: pointer;
 `
 
 const MolcomDisclaimer = styled.span`
