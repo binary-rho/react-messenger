@@ -654,8 +654,8 @@ const ChattingList = styled.div`
   /* 몰컴: 내용이 가운데 기둥(최대 768px)에 모이고, 가로로 밀리지 않게 고정 */
   :root[data-molcom='true'] & {
     overflow-x: hidden;
-    padding-left: max(1.25rem, calc((100% - 768px) / 2));
-    padding-right: max(1.25rem, calc((100% - 768px) / 2));
+    padding-left: max(1.75rem, calc((100% - 768px) / 2));
+    padding-right: max(1.75rem, calc((100% - 768px) / 2));
   }
 `
 const NoChattingList = styled(ChattingList)`
@@ -712,7 +712,9 @@ const ChattingBox1 = styled.span`
   word-break: break-all;
 
   :root[data-molcom='true'] & {
-    max-width: 85%;
+    max-width: 100%;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
     border-radius: 1.25rem;
     padding: 0.6rem 1rem;
     font-size: 1rem;
@@ -769,6 +771,12 @@ const ReactionTarget = styled.div<{ $isMine: boolean; $isHighlighted: boolean }>
   flex-direction: column;
   width: fit-content;
   align-self: ${({ $isMine }) => ($isMine ? 'flex-end' : 'flex-start')};
+  min-width: 0;
+
+  /* 몰컴: 내 메시지는 최대 85% 폭, 상대 메시지는 폭 전체 */
+  :root[data-molcom='true'] & {
+    ${({ $isMine }) => ($isMine ? 'max-width: 85%;' : 'width: 100%; align-self: stretch;')}
+  }
 
   &:hover ${MessageToolbar}, &:focus-within ${MessageToolbar} {
     display: flex;
@@ -910,16 +918,25 @@ const MolcomFooter = styled.div`
   width: 100%;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.25rem 0.5rem;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem 0.75rem;
   background-color: ${colors.surface};
   color: ${colors.grey_400};
   font-family: 'Pretendard-Regular';
   font-size: 12px;
 `
 
-const MolcomDisclaimer = styled.span``
+const MolcomDisclaimer = styled.span`
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+`
 
 const MolcomModel = styled.span`
+  flex-shrink: 0;
   color: ${colors.grey_900};
   font-family: 'Pretendard-Medium';
 `
