@@ -19,3 +19,16 @@ export const themeModeState = atom<ThemeMode>({
     },
   ],
 })
+
+export const MOLCOM_STORAGE_KEY = 'molcomMode'
+
+//몰컴 테마(GPT 스타일 채팅) 켜기/끄기
+export const molcomModeState = atom<boolean>({
+  key: 'molcomModeState',
+  default: localStorage.getItem(MOLCOM_STORAGE_KEY) === 'true',
+  effects: [
+    ({ onSet }) => {
+      onSet((isOn) => localStorage.setItem(MOLCOM_STORAGE_KEY, String(isOn)))
+    },
+  ],
+})

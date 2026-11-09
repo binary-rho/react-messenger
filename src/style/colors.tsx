@@ -12,6 +12,10 @@ const lightPalette = {
   grey_400: '#A1A8B2',
   grey_700: '#686A73',
   grey_900: '#292929',
+
+  myBubble: '#5D5FEF', // 내 말풍선 배경/글자
+  myBubbleText: '#FFFFFF',
+  otherBubble: '#FFFFFF', // 상대 말풍선 배경
 }
 
 const darkPalette: typeof lightPalette = {
@@ -28,6 +32,39 @@ const darkPalette: typeof lightPalette = {
   grey_400: '#8B919C',
   grey_700: '#A9AFBA',
   grey_900: '#ECEDF0',
+
+  myBubble: '#5D5FEF',
+  myBubbleText: '#FFFFFF',
+  otherBubble: '#1E1F24',
+}
+
+//몰컴 테마 (모바일 GPT 채팅 느낌): 내 메시지만 회색 말풍선, 상대 메시지는 말풍선 없이 글자만
+const molcomLightPalette: typeof lightPalette = {
+  ...lightPalette,
+  surface: '#FFFFFF',
+  grey_50: '#FFFFFF',
+  grey_100: '#E5E5E5',
+  grey_300: '#C4C4C4',
+  grey_400: '#8F8F8F',
+  grey_700: '#5D5D5D',
+  grey_900: '#0D0D0D',
+  myBubble: '#F4F4F4',
+  myBubbleText: '#0D0D0D',
+  otherBubble: 'transparent',
+}
+
+const molcomDarkPalette: typeof lightPalette = {
+  ...darkPalette,
+  surface: '#212121',
+  grey_50: '#212121',
+  grey_100: '#383838',
+  grey_300: '#5A5A5A',
+  grey_400: '#9B9B9B',
+  grey_700: '#B4B4B4',
+  grey_900: '#ECECEC',
+  myBubble: '#303030',
+  myBubbleText: '#ECECEC',
+  otherBubble: 'transparent',
 }
 
 type ColorKey = keyof typeof lightPalette
@@ -45,4 +82,6 @@ const toCssVariables = (palette: typeof lightPalette) =>
 export const themeCssVariables = {
   light: toCssVariables(lightPalette),
   dark: toCssVariables(darkPalette),
+  molcomLight: toCssVariables(molcomLightPalette),
+  molcomDark: toCssVariables(molcomDarkPalette),
 }

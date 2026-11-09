@@ -44,6 +44,12 @@ const GlobalStyle = createGlobalStyle`
     ${themeCssVariables.dark}
     color-scheme: dark;
   }
+  :root[data-molcom='true'] {
+    ${themeCssVariables.molcomLight}
+  }
+  :root[data-molcom='true'][data-theme='dark'] {
+    ${themeCssVariables.molcomDark}
+  }
   input, textarea {
     color: ${colors.grey_900};
   }

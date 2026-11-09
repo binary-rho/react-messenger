@@ -596,18 +596,26 @@ const ChattingBox1 = styled.span`
   display: flex;
   width: fit-content;
   max-width: 16rem;
-  background-color: ${colors.purple};
+  background-color: ${colors.myBubble};
   border-radius: 0.6rem;
   padding: 0.63rem 0.75rem 0.63rem 0.75rem;
-  color: ${colors.white};
+  color: ${colors.myBubbleText};
   line-height: 120%;
   font-family: 'Pretendard-Light';
   margin-bottom: 0.5rem;
   word-break: break-all;
+
+  :root[data-molcom='true'] & {
+    max-width: 85%;
+    border-radius: 1.25rem;
+    padding: 0.6rem 1rem;
+    font-size: 1rem;
+    line-height: 150%;
+  }
 `
 
 const ChattingBox2 = styled.span`
-  background-color: ${colors.surface};
+  background-color: ${colors.otherBubble};
   border-radius: 0.6rem;
   padding: 0.63rem 0.75rem 0.63rem 0.75rem;
   color: ${colors.grey_900};
@@ -617,6 +625,15 @@ const ChattingBox2 = styled.span`
   font-family: 'Pretendard-Light';
   margin-bottom: 0.5rem;
   word-break: break-all;
+
+  /* 몰컴: 말풍선 없이 글자만 */
+  :root[data-molcom='true'] & {
+    max-width: none;
+    padding: 0.25rem 0;
+    border-radius: 0;
+    font-size: 1rem;
+    line-height: 160%;
+  }
 `
 
 const highlightFlash = keyframes`
@@ -717,12 +734,14 @@ const ProfileImg = styled.img`
   height: 3.125rem;
   border-radius: 50px;
   object-fit: cover;
+  flex-shrink: 0;
   margin-right: 0.5rem;
 `
 
 const NoProfileImg = styled.div`
+  flex-shrink: 0;
   width: 3.125rem;
-  margin: 0rem 0.5rem 0rem 0.5rem;
+  margin-right: 0.5rem;
 `
 
 const FriendChatContainer = styled.div`
@@ -730,6 +749,10 @@ const FriendChatContainer = styled.div`
   flex-direction: column;
   width: 100%;
   max-width: 15rem;
+
+  :root[data-molcom='true'] & {
+    max-width: none;
+  }
 `
 
 const FriendName = styled.span`
@@ -817,6 +840,12 @@ const InputBox = styled.input`
   }
 
   background-color: ${colors.grey_50};
+
+  :root[data-molcom='true'] & {
+    border: 1px solid ${colors.grey_100};
+    border-radius: 1.5rem;
+    padding-left: 16px;
+  }
 `
 
 const AirplainIcon = styled.img`

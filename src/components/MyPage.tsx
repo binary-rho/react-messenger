@@ -8,6 +8,7 @@ import { resolveAvatarSrc, updateProfile, validateAvatarFile, validateName } fro
 import { myProfileState, useMyProfile } from '../states/profileAtom'
 import { NotificationToggle } from './NotificationToggle'
 import { ThemeToggle } from './ThemeToggle'
+import { MolcomToggle } from './MolcomToggle'
 import { CameraIcon } from './icons'
 
 interface MyPageProps {
@@ -111,6 +112,7 @@ export const MyPage = ({ isEditing, setIsEditing, finishEditRef }: MyPageProps) 
         <SettingList>
           <NotificationToggle />
           <ThemeToggle />
+          <MolcomToggle />
         </SettingList>
         <LogoutButton type="button" onClick={() => signOut().catch(console.error)}>
           로그아웃
