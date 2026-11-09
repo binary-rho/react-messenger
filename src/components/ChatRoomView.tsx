@@ -650,6 +650,13 @@ const ChattingList = styled.div`
   &::-webkit-scrollbar {
     display: none;
   }
+
+  /* 몰컴: 내용이 가운데 기둥(최대 768px)에 모이고, 가로로 밀리지 않게 고정 */
+  :root[data-molcom='true'] & {
+    overflow-x: hidden;
+    padding-left: max(1.25rem, calc((100% - 768px) / 2));
+    padding-right: max(1.25rem, calc((100% - 768px) / 2));
+  }
 `
 const NoChattingList = styled(ChattingList)`
   align-items: center;
@@ -677,12 +684,18 @@ const MyChatList = styled.div`
   flex-direction: column;
   align-items: flex-end;
   width: 100%;
+  flex-shrink: 0;
 `
 
 const MyChatContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  max-width: 100%;
+
+  :root[data-molcom='true'] & {
+    width: 100%;
+  }
 `
 
 const ChattingBox1 = styled.span`
@@ -721,9 +734,14 @@ const ChattingBox2 = styled.span`
 
   /* 몰컴: 말풍선 없이 글자만 */
   :root[data-molcom='true'] & {
+    display: block;
+    width: 100%;
     max-width: none;
     padding: 0.25rem 0;
     border-radius: 0;
+    text-align: justify;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
     font-size: 1.0625rem;
     line-height: 170%;
     margin-bottom: 0.75rem;
@@ -815,6 +833,7 @@ const FriendChatList = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
+  min-width: 0;
 `
 
 const FriendContainer = styled.div`
