@@ -782,7 +782,7 @@ const ChattingBox2 = styled.span`
     max-width: none;
     padding: 0.125rem 0;
     border-radius: 0;
-    text-align: center;
+    text-align: left;
     word-break: keep-all;
     overflow-wrap: anywhere;
     font-size: 1.0625rem;
@@ -938,7 +938,7 @@ const FriendName = styled.span`
 
   /* 몰컴: 이름은 보여주되 "Claude" 라벨처럼 답변 위에 작게 */
   :root[data-molcom='true'] & {
-    align-self: center;
+    align-self: flex-start;
     margin-top: 0.75rem;
     margin-bottom: 0.375rem;
     font-family: 'Pretendard-SemiBold';
