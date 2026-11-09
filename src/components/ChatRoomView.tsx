@@ -3,6 +3,8 @@ import styled, { css, keyframes } from 'styled-components'
 import { colors } from '../style/colors'
 import { imgPath } from '../style/imgPath'
 import { Link } from 'react-router-dom'
+import { useRecoilValue } from 'recoil'
+import { molcomModeState } from '../states/themeAtom'
 import { format } from 'date-fns'
 import { appFrame } from '../style/layout'
 import { Profile, resolveAvatarSrc } from '../api/profile'
@@ -349,6 +351,7 @@ export const ChatRoomView = ({
   )
 
   const isChatOn = messages.length > 0
+  const isMolcom = useRecoilValue(molcomModeState)
 
   return (
     <ChattingContainer data-chat-room>
@@ -507,6 +510,12 @@ export const ChatRoomView = ({
           </InputContainer>
         </ChatArea>
       </BottomBox>
+      {isMolcom && (
+        <MolcomFooter>
+          <MolcomDisclaimer>AI는 실수를 할 수 있습니다.</MolcomDisclaimer>
+          <MolcomModel>Sonnet 5.5 중간</MolcomModel>
+        </MolcomFooter>
+      )}
       <SafeAreaImg2 src={imgPath.path[2]} />
       {overlay}
     </ChattingContainer>
@@ -812,6 +821,10 @@ const FriendContainer = styled.div`
   display: flex;
   width: 100%;
   align-items: flex-start;
+
+  :root[data-molcom='true'] & {
+    margin-top: 0 !important;
+  }
 `
 
 const ProfileImg = styled.img`
@@ -854,6 +867,10 @@ const FriendName = styled.span`
   font-size: 14px;
   line-height: 120%; /* 16.8px */
   margin-bottom: 0.25rem;
+
+  :root[data-molcom='true'] & {
+    display: none;
+  }
 `
 
 const ChatTime = styled.span`
@@ -862,6 +879,30 @@ const ChatTime = styled.span`
   font-size: 14px;
   line-height: 120%; /* 16.8px */
   margin-bottom: 0.6rem;
+
+  :root[data-molcom='true'] & {
+    display: none;
+  }
+`
+
+const MolcomFooter = styled.div`
+  display: flex;
+  flex-shrink: 0;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem 0.5rem;
+  background-color: ${colors.surface};
+  color: ${colors.grey_400};
+  font-family: 'Pretendard-Regular';
+  font-size: 12px;
+`
+
+const MolcomDisclaimer = styled.span``
+
+const MolcomModel = styled.span`
+  color: ${colors.grey_900};
+  font-family: 'Pretendard-Medium';
 `
 
 const ChatArea = styled.div`
